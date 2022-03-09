@@ -1,7 +1,24 @@
 name = "PolarizationFramework"
+uuid = "cf6d9426-9fb6-11ec-3bc5-a3163c23dd97"
 authors = ["Piotr J Górski"]
-[compat]
-julia = "1.6.4"
-DrWatson = "2.9.0"
+version = "0.1.0"
+
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+DrWatson = "2.9.0"
+julia = "1.6.4"
+
+[extras]
+CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
