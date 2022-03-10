@@ -9,7 +9,7 @@ using Statistics
 # using Attributes
 
 #This type is to store simulation results (SINGLE LAYER!)
-struct CurResult
+struct Result
     #parameters
     n::UInt32 #number of nodes
     g::UInt32 #number of attributes
@@ -64,10 +64,10 @@ struct CurResult
     # "Delta0", "Delta0_std", "Delta1", "Delta1_std", "Delta2",
     # "Delta2_std", "Delta3", "Delta3_std"]
 end
-export CurResult
+export Result
 
 # Constructor
-function CurResult(n, g, gammas, maxtime, ode_fun_name::String, attr::AbstractAttributes)
+function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String)
     nb = length(gammas);
 
     HB = zeros(Float64, nb);
@@ -111,34 +111,34 @@ function CurResult(n, g, gammas, maxtime, ode_fun_name::String, attr::AbstractAt
         "Delta2_std", "Delta3", "Delta3_std"]
     data = zeros(Float64, nb*2, length(interpretation))
 
-    CurResult(n, g, gammas, maxtime, ode_fun_name, get_name(attr), get_threshold(attr), get_degeneracy(attr),
+    Result(n, attr.g, gammas, maxtime, ode_fun_name, get_name(attr), get_threshold(attr), get_degeneracy(attr),
         HB, HB_x, HB_attr, HB_only_weights, BR, paradise, hell,
         weak_balance_in_complete_graph, initial_neg_links_count, initial_neg_links_count_std,
         links_destab_changed, links_destab_changed_std, Deltas, Deltas_std,
         sim, x_attr_sim, stab, times, BR_std,
         sim_std, x_attr_sim_std, times_std, zmax, data, interpretation)
 end
-export CurResult
+export Result
 
-function CurResult(n, g, gammas, maxtime, ode_fun_name::String)
-    CurResult(n, g, gammas, maxtime, ode_fun_name, BinaryAttributes(g))
+function Result(n::Int, g::Int, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String)
+    Result(n, BinaryAttributes(g), gammas, maxtime, ode_fun_name)
 end
-export CurResult
+export Result
 
-function CurResult(n, g, gammas, maxtime)
-    CurResult(n, g, gammas, maxtime, "Heider5!")
+function Result(n::Int, g::Int, gammas::Vector{Float64}, maxtime::Float64)
+    Result(n, g, gammas, maxtime, "Heider5!")
 end
-export CurResult
+export Result
 
-function CurResult(n, g, gammas, ode_fun_name::String)
-    CurResult(n, g, gammas, 1000., ode_fun_name)
+function Result(n::Int, g::Int, gammas::Vector{Float64}, ode_fun_name::String)
+    Result(n, g, gammas, 1000., ode_fun_name)
 end
-export CurResult
+export Result
 
-function CurResult(n, g, gammas)
-    CurResult(n, g, gammas, 1000.)
+function Result(n::Int, g::Int, gammas::Vector{Float64})
+    Result(n, g, gammas, 1000.)
 end
-export CurResult
+export Result
 
 #save results to MATLAB file
 function save_result(res, filename)
@@ -163,7 +163,7 @@ end
 export read_result
 
 #function to update result fields based on elements of fields tuple
-function update_result!(res::CurResult, fields)
+function update_result!(res::Result, fields)
     HB, HB_x, HB_attr, sim, x_attr_sim, BR, paradise, hell,
         initial_neg_links_count, links_destab_changed, Deltas,
         weak_balance_in_complete_graph, stab, times,

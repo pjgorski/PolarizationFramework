@@ -109,8 +109,8 @@ end
 @testset "Simple simulation run" begin
     g = 5
     attr = BinaryAttributes(g)
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(45, 0., 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), true, attr)
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(45, attr, 0., 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), true)
 end
 
 @testset "Simulation with initial conditions" begin
@@ -121,14 +121,17 @@ end
 
     rl_bal = init_random_balanced_relations(n)
 
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, 0., 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), false, attr);
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, gamma, 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), false, attr);
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, gamma, 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), false, attr, rl_bal);
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(15, 0., 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), false, attr, (), );
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(15, 0., 1000., 
-        "Heider7!", AutoTsit5(Rodas5(autodiff = false)), false, attr);
+    val0_attr = get_attributes(attr, n);
+    al_w = get_attribute_layer_weights(attr, val0_attr);
+
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, 0., 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), false);
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, gamma, 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), false);
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, gamma, 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), false, rl_bal);
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, gamma, 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), false, (), al_w);
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, gamma, 1000., 
+        Heider7!, AutoTsit5(Rodas5(autodiff = false)), false, rl_bal, al_w);
 end

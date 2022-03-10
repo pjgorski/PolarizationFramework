@@ -33,8 +33,8 @@ using Dates
 # initial conditions of RL, 
 # initial conditions of AL, 
 # whole sol (if transition values are not saved, see show_plot, then they are not here).
-function calc_curheider_attr(n, gamma, maxtime::Float64, ode_fun, solver,
-        show_plot::Bool, attr::AbstractAttributes, input...)
+function calc_curheider_attr(n::Int, attr::AbstractAttributes, gamma::Float64, maxtime::Float64, ode_fun::Function, solver,
+        show_plot::Bool, input...)
     #initial conditions
     need_init_u0 = true
     need_init_xy = true
@@ -131,44 +131,13 @@ export calc_curheider_attr
 
 # function using calc_curheider_attr (SINGLE LAYER!) function to simulate a number of repetitions:
 # ode_fun_name should be a string, that is later converted into the function with the same name.
-function using_curheider_attr(n, g, gammas, zmax, maxtime, ode_fun_name::String,
-    input_fun_name::String, attr::AbstractAttributes, disp_each, disp_more_every, save_each, filename)
+function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String,
+    disp_each, disp_more_every, save_each, filename)
 
-    ode_fun = getfield(HBUtil, Symbol(ode_fun_name))
-    if ode_fun_name == "Heider6!"
-        solver =AutoTsit5(Rodas5(autodiff = false))
-    else
-        solver =AutoTsit5(Rodas5(autodiff = false))
-    end
+    ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
+    solver = AutoTsit5(Rodas5(autodiff = false))
 
-    if any(input_fun_name .== ["", "random", "rand"]) #do nothing
-        case = 1
-        n_start = ()
-        #input_fun(n,g) = ()
-    elseif input_fun_name == "init_balanced"
-        input_fun2 = getfield(HBUtil, Symbol(input_fun_name))
-        case = 2
-        n_start = ()
-        #input_fun(n,g) = ((), input_fun2(n,g))
-        #input = ((), init_balanced(n,g))
-    elseif input_fun_name == "init_random_balanced_enhanced"
-        input_fun2 = getfield(HBUtil, Symbol(input_fun_name))
-        n_start = find_nstart(attr, n)
-        println("Started from n_start=$n_start.")
-        case = 3
-    end
-
-    function input_fun(case, n_start=())
-        if case == 1
-            return ()
-        elseif case == 2
-            return ((), input_fun2(attr, n))
-        elseif case == 3
-            return ((), input_fun2(attr, n,n_start))
-        end
-    end
-
-    r = CurResult(n, g, gammas, maxtime, ode_fun_name, attr);
+    r = Result(n, attr, gammas, maxtime, ode_fun_name);
     if isempty(filename)
         filename = "data/attr_curheider_results";
     else
@@ -211,8 +180,7 @@ function using_curheider_attr(n, g, gammas, zmax, maxtime, ode_fun_name::String,
         for rep in 1:zmax
             #simulation
             (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                calc_curheider_attr(n, g, gamma1, maxtime, ode_fun, solver, false,
-                    attr, input_fun(case, n_start)...)
+                calc_curheider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false)
             realization_counter += 1
 
             #work on results
@@ -223,18 +191,12 @@ function using_curheider_attr(n, g, gammas, zmax, maxtime, ode_fun_name::String,
             initial_neg_links_count[rep] = sum(u0 .< 0)
             links_destab_changed[3, rep] = sum(u[u0.>0].<0) #number of initial pos links that changed to negative
             links_destab_changed[4, rep] = sum(u[u0.<0].>0) #number of initial neg links that changed to positive
-            # if !isempty(sol2)
-            #     time_inf[rep] = 1
-            #     t = maxtime # in the case of :MaxIters, t is smaller than maxtime,
-            #                 # which can lead to wrong results
-            # end
 
             if t < maxtime #we have stability
                 HB[rep] = ishb_sim_par[1]
                 stab[rep] = 1
             end
 
-            #sim[rep] = get_layer_similarity(u, n);
             times[rep] = t;
 
             #checking time/repetitions and eventually informing about progress and saving
@@ -284,58 +246,16 @@ export using_curheider_attr
 # function using calc_curheider_attr (SINGLE LAYER!) function to simulate
 # the outcome of a destabilization of a balanced system.
 # ode_fun_name should be a string, that is later converted into the function with the same name.
-function using_curheider_attr_destab(n, g, gammas, larger_size::Int, zmax,
-    maxtime, ode_fun_name::String,
-    attr::AbstractAttributes,
+function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
+    maxtime::Float64, ode_fun_name::String,
     disp_each, disp_more_every, save_each, filename)
 
     ode_fun = getfield(HBUtil, Symbol(ode_fun_name))
-    if ode_fun_name == "Heider6!"
-        solver =AutoTsit5(Rodas5(autodiff = false))
-    else
-        solver =AutoTsit5(Rodas5(autodiff = false))
-    end
-
-    # if any(input_fun_name .== ["", "random", "rand"]) #do nothing
-    #     case = 1
-    #     n_start = ()
-    #     #input_fun(n,g) = ()
-    # elseif input_fun_name == "init_balanced"
-    #     input_fun2 = getfield(HBUtil, Symbol(input_fun_name))
-    #     case = 2
-    #     n_start = ()
-    #     #input_fun(n,g) = ((), input_fun2(n,g))
-    #     #input = ((), init_balanced(n,g))
-    # elseif input_fun_name == "init_random_balanced_enhanced"
-    #     input_fun2 = getfield(HBUtil, Symbol(input_fun_name))
-    #     n_start = find_nstart(attr, n)
-    #     println("Started from n_start=$n_start.")
-    #     case = 3
-    # elseif input_fun_name == "init_random_balanced_relations"
-    #     input_fun2 = getfield(HBUtil, Symbol(input_fun_name))
-    #     case = 4
-    #     n_start = ()
-    # end
-    # function input_fun(case, n_start=())
-    #     if case == 1
-    #         return ()
-    #     elseif case == 2
-    #         return ((), input_fun2(attr, n))
-    #     elseif case == 3
-    #         return ((), input_fun2(attr, n,n_start))
-    #     elseif case == 4
-    #         return (input_fun2(n, larger_size))
-    #     end
-    # end
+    solver = AutoTsit5(Rodas5(autodiff = false))
 
     rl_weights = init_random_balanced_relations(n, larger_size)
 
-    # val0_attr = get_attributes(attr, n);
-    # al_weights = get_attribute_layer_weights(attr, val0_attr);
-    #
-    # (pos_destab, neg_destab, gammas2) = get_destabilized_links_count(rl, al)
-
-    r = CurResult(n, g, gammas, maxtime, ode_fun_name, attr);
+    r = Result(n, attr, gammas, maxtime, ode_fun_name);
     if isempty(filename)
         filename = "data/attr_curheider_destab_results";
     else
@@ -383,7 +303,7 @@ function using_curheider_attr_destab(n, g, gammas, larger_size::Int, zmax,
             (pos_destab, neg_destab) = get_destabilized_links_count(rl_weights, al_weights, gamma1)
             links_destab_changed[1,:] .= pos_destab
             links_destab_changed[2,:] .= neg_destab
-            if pos_destab + neg_destab == 0 #no destabilization
+            if pos_destab + neg_destab == 0 #no destabilization => no sense of further calculations
                 HB[rep] = 1
                 HB_x[rep] = 1
                 BR[rep] = 1
@@ -403,8 +323,8 @@ function using_curheider_attr_destab(n, g, gammas, larger_size::Int, zmax,
             else
                 #simulation
                 (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                    calc_curheider_attr(n, g, gamma1, maxtime, ode_fun, solver, false,
-                        attr, rl_weights, al_weights)
+                    calc_curheider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false,
+                        rl_weights, al_weights)
 
                 #work on results
                 HB_x[rep], HB_attr[rep], x_attr_sim[rep], BR[rep],
@@ -466,35 +386,5 @@ function using_curheider_attr_destab(n, g, gammas, larger_size::Int, zmax,
     return r;
 end
 export using_curheider_attr_destab
-
-function test()
-    ishb, t, u, u0, sol = calc_heider(45, 0., 1000., true);
-end
-
-function test2()
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider(3, 5, -1.5, 2000., Heider6!, AutoTsit5(Rodas5(autodiff = false)), false)
-
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider(3, 5, -1.5, 2000., Heider6!, AutoTsit5(Rodas5(autodiff = false)), false, ())
-
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider(3, 5, -1.5, 2000., Heider6!, AutoTsit5(Rodas5(autodiff = false)), false, (), init_balanced(3,5))
-end
-export test2
-
-function test3()
-    n = 3
-    g = 3
-    v = 4
-    gamma = 0.5
-    maxtime = 1000.
-    ode_fun = Heider7!
-    solver = AutoTsit5(Rodas5(autodiff = false))
-    show_plot = false
-    attr = OrderedAttributes(g, 0.5, v)
-    input = ()
-    return n, g, v, gamma, maxtime, ode_fun, solver, show_plot, attr, input
-end
-export test3
-# n, g, v, gamma, maxtime, ode_fun, solver, show_plot, attr, input = test3()
-# (ishb_sim_par, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, g, gamma, maxtime, ode_fun, solver, show_plot, attr, input)
 
 # end
