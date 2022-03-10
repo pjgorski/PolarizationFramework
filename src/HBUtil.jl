@@ -184,6 +184,18 @@ function get_triad_counts(x::Array{Float64,2}, n)
 end
 export get_triad_counts
 
+# Calculates local polarization metric. It is a sum of triads of type 2 and 3
+function get_local_polarization(x::Array{Float64,2}, n)
+  Deltas = get_triad_counts(x, n)
+
+  return (Deltas[3] + Deltas[4]) / sum(Deltas)
+end
+export get_local_polarization
+
+function get_local_polarization(Deltas::Array{Float64,1})
+  return (Deltas[3] + Deltas[4]) / sum(Deltas)
+end
+
 # calculates similarity parameter between the layers
 # works only for 2 layers.
 function get_layer_similarity(x::Array{Float64,3}, n)

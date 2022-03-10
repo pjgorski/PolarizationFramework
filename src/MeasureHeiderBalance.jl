@@ -5,6 +5,7 @@
 
 # module MeasureHeiderBalance
 
+using DrWatson
 using DifferentialEquations
 using Plots
 using LinearAlgebra
@@ -132,21 +133,18 @@ export calc_curheider_attr
 # function using calc_curheider_attr (SINGLE LAYER!) function to simulate a number of repetitions:
 # ode_fun_name should be a string, that is later converted into the function with the same name.
 function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String,
-    disp_each, disp_more_every, save_each, filename)
+    disp_each, disp_more_every, save_each, files_folder, filename_prefix)
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name);
-    if isempty(filename)
-        filename = "data/attr_curheider_results";
-    else
-        filename = "data/"*filename;
-    end
-    filename = get_filename(filename, ".mat");
+    r = Result(n, attr, gammas, maxtime, ode_fun_name)
+    file_params = savename(r, sort=false)
+
+    filename = datadir(files_folder, filename_prefix, file_params, Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"), ".mat")
     save_result(r, filename); #''allocating'' place
 
-    # time prepariation
+    # time preparation
     if disp_more_every != 0
         time_disp = time();
     end
@@ -248,20 +246,17 @@ export using_curheider_attr
 # ode_fun_name should be a string, that is later converted into the function with the same name.
 function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
     maxtime::Float64, ode_fun_name::String,
-    disp_each, disp_more_every, save_each, filename)
+    disp_each, disp_more_every, save_each, files_folder, filename_prefix)
 
     ode_fun = getfield(HBUtil, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
     rl_weights = init_random_balanced_relations(n, larger_size)
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name);
-    if isempty(filename)
-        filename = "data/attr_curheider_destab_results";
-    else
-        filename = "data/"*filename;
-    end
-    filename = get_filename(filename, ".mat");
+    r = Result(n, attr, gammas, maxtime, ode_fun_name)
+    file_params = savename(r, sort=false)
+
+    filename = datadir(files_folder, filename_prefix, file_params, Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"), ".mat")
     save_result(r, filename); #''allocating'' place
 
     # time prepariation

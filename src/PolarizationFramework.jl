@@ -1,11 +1,11 @@
 module PolarizationFramework
 
-# using DrWatson
+using DrWatson
 
-include("MyUtil.jl")
-include("HBUtil.jl")
-include("Attributes.jl")
-include("Results.jl")
-include("MeasureHeiderBalance.jl")
+include(srcdir("MyUtil.jl"))
+include(srcdir("HBUtil.jl"))
+include(srcdir("Attributes.jl"))
+include(srcdir("Results.jl"))
+include(srcdir("MeasureHeiderBalance.jl"))
 
 end
