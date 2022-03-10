@@ -3,6 +3,7 @@
 
 # module Results
 
+using DrWatson
 using MAT
 using Statistics
 
@@ -30,6 +31,8 @@ struct Result
     paradise::Array{Float64,1} #number of times paradise was achieved divided by number of repetitions
     hell::Array{Float64,1} #number of times hell was achieved divided by number of repetitions
     weak_balance_in_complete_graph::Array{Float64,1} #number of times weak SB was achieved divided by number of repetitions
+    local_polarization::Array{Float64,1} #local polarization measure
+    global_polarization::Array{Float64,1} #number of times system was globally polarized
 
     initial_neg_links_count::Array{Float64,1} #mean number of initial negative links
     initial_neg_links_count_std::Array{Float64,1} #std of initial negative links
@@ -44,6 +47,7 @@ struct Result
     times::Array{Float64,1} #mean times to reach the end of simulation
 
     BR_std::Array{Float64,1} #std deviation of ratio of balanced triads
+    local_polarization_std::Array{Float64,1} #std deviation of local polarization measure
     sim_std::Array{Float64,1} #std deviation of similarity of layers at the end of simulations
     x_attr_sim_std::Array{Float64,1} #std deviation of similarity of weights and attributes at the end of simulations
     times_std::Array{Float64,1} #std deviation of times to reach the end of simulation
@@ -78,6 +82,8 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
     paradise = copy(HB)
     hell = copy(HB)
     weak_balance_in_complete_graph = copy(HB)
+    local_polarization = copy(HB)
+    global_polarization = copy(HB)
 
     initial_neg_links_count = copy(HB)
     initial_neg_links_count_std = copy(HB)
@@ -90,6 +96,7 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
     times = copy(sim);
 
     BR_std = copy(sim)
+    local_polarization_std = copy(sim)
     links_destab_changed_std = copy(Deltas)
     Deltas_std = copy(Deltas);
     sim_std = copy(sim)
@@ -102,7 +109,7 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
         "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
         "sim", "sim_std",
         "x_attr_sim", "x_attr_sim_std",
-        "BR", "BR_std", "stab",
+        "BR", "BR_std", "LP", "LP_std", "GP", "stab",
         "times", "times_std",
         "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
         "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
@@ -113,9 +120,10 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
 
     Result(n, attr.g, gammas, maxtime, ode_fun_name, get_name(attr), get_threshold(attr), get_degeneracy(attr),
         HB, HB_x, HB_attr, HB_only_weights, BR, paradise, hell,
-        weak_balance_in_complete_graph, initial_neg_links_count, initial_neg_links_count_std,
+        weak_balance_in_complete_graph, local_polarization, global_polarization,
+        initial_neg_links_count, initial_neg_links_count_std,
         links_destab_changed, links_destab_changed_std, Deltas, Deltas_std,
-        sim, x_attr_sim, stab, times, BR_std,
+        sim, x_attr_sim, stab, times, BR_std, local_polarization_std,
         sim_std, x_attr_sim_std, times_std, zmax, data, interpretation)
 end
 export Result
@@ -166,7 +174,7 @@ export read_result
 function update_result!(res::Result, fields)
     HB, HB_x, HB_attr, sim, x_attr_sim, BR, paradise, hell,
         initial_neg_links_count, links_destab_changed, Deltas,
-        weak_balance_in_complete_graph, stab, times,
+        weak_balance_in_complete_graph, local_polarization, global_polarization, stab, times,
         i, rep, firstline = fields;
     res.HB[i] = sum(HB) / rep;
     res.HB_x[i] = sum(HB_x) / rep
@@ -176,6 +184,8 @@ function update_result!(res::Result, fields)
     res.paradise[i] = sum(paradise) / rep
     res.hell[i] = sum(hell) / rep
     res.weak_balance_in_complete_graph[i] = sum(weak_balance_in_complete_graph) / rep
+    res.local_polarization[i] = sum(local_polarization) / rep
+    res.global_polarization[i] = sum(global_polarization) / rep
 
     res.initial_neg_links_count[i] = sum(initial_neg_links_count) / rep
     res.links_destab_changed[:, i] = sum(links_destab_changed, dims=2) / rep
@@ -187,6 +197,7 @@ function update_result!(res::Result, fields)
     res.times[i] = sum(times) / rep;
 
     res.BR_std[i] = std(BR[1:rep])
+    res.local_polarization_std[i] = std(local_polarization[1:rep])
     res.initial_neg_links_count_std[i] = std(initial_neg_links_count[1:rep])
     res.Deltas_std[:, i] = std(Deltas[:, 1:rep], dims=2)
     res.links_destab_changed_std[:, i] = std(links_destab_changed[:, 1:rep], dims=2)
@@ -210,6 +221,8 @@ function update_result!(res::Result, fields)
         sum(sim[mask_true])/smt, std(sim[1:rep][mask_true[1:rep]]),
         sum(x_attr_sim[mask_true])/smt, std(x_attr_sim[1:rep][mask_true[1:rep]]),
         sum(BR[mask_true])/smt, std(BR[1:rep][mask_true[1:rep]]),
+        sum(local_polarization[mask_true])/smt, std(local_polarization[1:rep][mask_true[1:rep]]),
+        sum(global_polarization[mask_true])/smt,
         sum(stab[mask_true])/smt,
         sum(times[mask_true])/smt, std(times[1:rep][mask_true[1:rep]]),
         sum(links_destab_changed[1, mask_true])/smt, std(links_destab_changed[1, 1:rep][mask_true[1:rep]]),
@@ -238,7 +251,8 @@ function update_result!(res::Result, fields)
         sum(sim[mask_false])/smf, std(sim[1:rep][mask_false[1:rep]]),
         sum(x_attr_sim[mask_false])/smf, std(x_attr_sim[1:rep][mask_false[1:rep]]),
         sum(BR[mask_false])/smf, std(BR[1:rep][mask_false[1:rep]]),
-        sum(stab[mask_false])/smf,
+        sum(local_polarization[mask_false])/smf, std(local_polarization[1:rep][mask_false[1:rep]]),
+        sum(global_polarization[mask_false])/smf, sum(stab[mask_false])/smf,
         sum(times[mask_false])/smf, std(times[1:rep][mask_false[1:rep]]),
         sum(links_destab_changed[1, mask_false])/smf, std(links_destab_changed[1, 1:rep][mask_false[1:rep]]),
         sum(links_destab_changed[2, mask_false])/smf, std(links_destab_changed[2, 1:rep][mask_false[1:rep]]),

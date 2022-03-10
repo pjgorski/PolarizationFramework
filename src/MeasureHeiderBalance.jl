@@ -28,7 +28,7 @@ using Dates
 # ishb_sim_par - array of Boolean values [is it balanced state, is AL in balanced state,
         # similarity between RL and AL, balanced ratio of RL, is it paradise state,
         # is it hell state, counts od different triads (Deltas: Delta0, Delta1, Delta2, Delta3), 
-        # is it weakly balanced state],
+        # is it weakly balanced state, local polarization measure, is the system globally polarized],
 # time of simulation to reach stable solution (or maxtime if not reached),
 # values of RL weights at the end of simulation, 
 # initial conditions of RL, 
@@ -81,14 +81,17 @@ function calc_curheider_attr(n::Int, attr::AbstractAttributes, gamma::Float64, m
         isoutofdomain = (u,p,t)->any(x->abs.(x)>=1,u), save_everystep=show_plot)
 
     #estimating output
+    paradise = is_paradise(sol.u[end], n)
     Deltas = get_triad_counts(sol.u[end], n)
     weak_balance_in_complete_graph = Deltas[1 + 1] == 0
+    local_polarization = get_local_polarization(Deltas)
+    global_polarization = weak_balance_in_complete_graph && (!paradise)
     ishb_sim_par = [is_hb(sol.u[end], n), is_hb(xy_attr, n),
         get_similarity(sol.u[end], xy_attr, n),
         get_balanced_ratio(sol.u[end], n),
-        is_paradise(sol.u[end], n),
+        paradise,
         is_hell(sol.u[end], n),
-        Deltas, weak_balance_in_complete_graph]
+        Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization]
 
     if show_plot
 
@@ -102,6 +105,24 @@ function calc_curheider_attr(n::Int, attr::AbstractAttributes, gamma::Float64, m
     return (ishb_sim_par, sol.t[end], sol.u[end], u0, xy_attr, sol)
 end
 export calc_curheider_attr
+
+# Function creating results file. It parses parameters creating a unique file name and saves initially this file. 
+# For parameters description see `using_curheider_attr`. 
+# Returns a Tuple with:
+#   object of `Result` DataType,
+#   `filename`
+function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String,
+    files_folder::String, filename_prefix::String)
+
+    r = Result(n, attr, gammas, maxtime, ode_fun_name)
+
+    prefix = filename_prefix*Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
+    file_params = savename(prefix, r, "mat", sort=false)
+
+    filename = projectdir(files_folder, file_params)
+    save_result(r, filename); #''allocating'' place
+    return r, filename
+end
 
 # Function using `calc_curheider_attr` function to simulate a number of repetitions
 # of solving the system having given parameters:
@@ -138,11 +159,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name)
-    file_params = savename(r, sort=false)
-
-    filename = datadir(files_folder, filename_prefix, file_params, Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"), ".mat")
-    save_result(r, filename); #''allocating'' place
+    r, filename = initialize_file(n, attr, gammas, maxtime, ode_fun_name, files_folder, filename_prefix)
 
     # time preparation
     if disp_more_every != 0
@@ -168,6 +185,8 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
         hell = zeros(zmax)
         Deltas = zeros(4, zmax)
         weak_balance_in_complete_graph = zeros(zmax)
+        local_polarization = zeros(zmax)
+        global_polarization = zeros(zmax)
         initial_neg_links_count = zeros(zmax)
         links_destab_changed = zeros(4, zmax)
 
@@ -184,7 +203,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
             #work on results
             HB_x[rep], HB_attr[rep], x_attr_sim[rep], BR[rep],
                 paradise[rep], hell[rep], Deltas[:, rep],
-                weak_balance_in_complete_graph[rep] = ishb_sim_par
+                weak_balance_in_complete_graph[rep], local_polarization[rep], global_polarization[rep] = ishb_sim_par
 
             initial_neg_links_count[rep] = sum(u0 .< 0)
             links_destab_changed[3, rep] = sum(u[u0.>0].<0) #number of initial pos links that changed to negative
@@ -212,7 +231,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
                     # partial saving
                     fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
                         paradise, hell, initial_neg_links_count,
-                        links_destab_changed, Deltas, weak_balance_in_complete_graph,
+                        links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
                         stab, times, i, rep, firstline);
                     update_result!(r, fields);
                     save_result(r, filename);
@@ -229,7 +248,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
         end
         fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
             paradise, hell, initial_neg_links_count,
-            links_destab_changed, Deltas, weak_balance_in_complete_graph,
+            links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
             stab, times, i, zmax, firstline);
         update_result!(r, fields);
         firstline+=2;
@@ -248,16 +267,12 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
     maxtime::Float64, ode_fun_name::String,
     disp_each, disp_more_every, save_each, files_folder, filename_prefix)
 
-    ode_fun = getfield(HBUtil, Symbol(ode_fun_name))
+    ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
     rl_weights = init_random_balanced_relations(n, larger_size)
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name)
-    file_params = savename(r, sort=false)
-
-    filename = datadir(files_folder, filename_prefix, file_params, Dates.format(now(), "yyyy-mm-ddTHH:MM:SS"), ".mat")
-    save_result(r, filename); #''allocating'' place
+    r, filename = initialize_file(n, attr, gammas, maxtime, ode_fun_name, files_folder, filename_prefix)
 
     # time prepariation
     if disp_more_every != 0
@@ -283,6 +298,8 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
         hell = zeros(zmax)
         Deltas = zeros(4, zmax)
         weak_balance_in_complete_graph = zeros(zmax)
+        local_polarization = zeros(zmax)
+        global_polarization = zeros(zmax)
         initial_neg_links_count = ones(zmax)*larger_size*(n-larger_size)
         links_destab_changed = zeros(4, zmax)
 
@@ -307,6 +324,8 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                 paradise[rep] = is_paradise(rl_weights, n)
                 hell[rep] = 0
                 Deltas[:, rep] = get_triad_counts(rl_weights, n)
+                local_polarization[rep] = get_local_polarization(Deltas[:, rep])
+                global_polarization[rep] = 1-paradise[rep]
                 weak_balance_in_complete_graph[rep] = 1
 
                 x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n);
@@ -324,7 +343,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                 #work on results
                 HB_x[rep], HB_attr[rep], x_attr_sim[rep], BR[rep],
                     paradise[rep], hell[rep], Deltas[:, rep],
-                    weak_balance_in_complete_graph[rep] = ishb_sim_par
+                    weak_balance_in_complete_graph[rep], local_polarization[rep], global_polarization[rep] = ishb_sim_par
 
                 links_destab_changed[3, rep] = sum(u[u0.>0].<0) #number of initial pos links that changed to negative
                 links_destab_changed[4, rep] = sum(u[u0.<0].>0) #number of initial neg links that changed to positive
@@ -353,7 +372,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                     # partial saving
                     fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
                         paradise, hell, initial_neg_links_count,
-                        links_destab_changed, Deltas, weak_balance_in_complete_graph,
+                        links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
                         stab, times, i, rep, firstline);
                     update_result!(r, fields);
                     save_result(r, filename);
@@ -370,7 +389,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
         end
         fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
             paradise, hell, initial_neg_links_count,
-            links_destab_changed, Deltas, weak_balance_in_complete_graph,
+            links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
             stab, times, i, zmax, firstline);
         update_result!(r, fields);
         firstline+=2;

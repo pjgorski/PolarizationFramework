@@ -135,3 +135,25 @@ end
     (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(n, attr, gamma, 1000., 
         Heider7!, AutoTsit5(Rodas5(autodiff = false)), false, rl_bal, al_w);
 end
+
+@testset "Series of simulations" begin
+    n = 5
+    g = 5
+    attr = BinaryAttributes(g)
+    gammas = [0.5, 1.5, 3.5]
+    zmax = 10
+    maxtime = 1000.
+    ode_fun_name = "Heider7!"
+    disp_each = 60
+    disp_more_every = 0.5
+    save_each = 60
+    files_folder = "test"
+    filename_prefix = "SoSNumerTest"
+
+    using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+
+    filename_prefix = "SoSDestabTest"
+    larger_size = 3
+
+    using_curheider_attr_destab(n, attr, gammas, larger_size, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+end
