@@ -6,6 +6,7 @@
 using DrWatson
 using MAT
 using Statistics
+using Suppressor
 
 # using Attributes
 
@@ -149,13 +150,41 @@ end
 export Result
 
 #save results to MATLAB file
-function save_result(res, filename)
-    if !endswith(filename, ".mat")
-        filename *= ".mat";
+function save_result(res, filename; ext = "mat")
+    if ext == "mat"
+        if !endswith(filename, "mat")
+            filename = filename*".mat"
+        end
+        file = matopen(filename, "w")
+        write(file, "result", res)
+        close(file)
+    elseif ext == "jld2"
+        if endswith(filename, r"\.[0-9a-z]+$")
+            filename = replace(filename, (r"\.[0-9a-z]+$"=>""))
+        end
+        for (i, gamma) in enumerate(res.gammas)
+            # This was not yet simulated. End of saving
+            if res.zmax[i] == 0
+                break
+            end
+
+            #creating filename
+            local filename_g
+            @suppress filename_g = savename(filename, (gamma = gamma, ), "jld2")
+
+            data_row = res.data[2*i-1, :]
+            @suppress @tagsave(
+                filename_g,
+                Dict(res.interpretation .=> data_row)
+            )
+            data_row = res.data[2*i, :]
+            @suppress @tagsave(
+                filename_g,
+                Dict(res.interpretation .=> data_row)
+            )
+        end
     end
-    file = matopen(filename, "w")
-    write(file, "result", res)
-    close(file)
+    
 end
 export save_result
 
@@ -272,4 +301,5 @@ macro Name(arg)
    string(arg)
 end
 
+DrWatson.allaccess(::Result) = (:attr_name, :n, :g, :attr_degeneracy)
 # end

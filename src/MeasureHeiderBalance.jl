@@ -111,6 +111,7 @@ export calc_curheider_attr
 # Returns a Tuple with:
 #   object of `Result` DataType,
 #   `filename`
+#   filename without extension
 function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String,
     files_folder::String, filename_prefix::String)
 
@@ -118,6 +119,7 @@ function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float6
 
     prefix = filename_prefix*Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
     file_params = savename(prefix, r, "mat", sort=false)
+    file_params = replace(file_params, "attr_degeneracy"=>"v")
 
     filename = projectdir(files_folder, file_params)
     save_result(r, filename); #''allocating'' place
@@ -235,6 +237,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
                         stab, times, i, rep, firstline);
                     update_result!(r, fields);
                     save_result(r, filename);
+                    save_result(r, filename, ext = "jld2");
                 end
             end
 
@@ -255,6 +258,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
     end
 
     save_result(r, filename);
+    save_result(r, filename, ext = "jld2");
 
     return r;
 end
@@ -376,6 +380,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                         stab, times, i, rep, firstline);
                     update_result!(r, fields);
                     save_result(r, filename);
+                    save_result(r, filename, ext = "jld2");
                 end
             end
 
@@ -396,6 +401,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
     end
 
     save_result(r, filename);
+    save_result(r, filename, ext = "jld2");
 
     return r;
 end
