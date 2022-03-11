@@ -144,38 +144,47 @@ end
     zmax = 10
     maxtime = 1000.
     ode_fun_name = "Heider7!"
-    disp_each = 60
-    disp_more_every = 0.5
+    disp_each = 0.5
+    disp_more_every = 60
     save_each = 60
     files_folder = "test"
     filename_prefix = "SoSNumerTest"
 
-    using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+    using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name; 
+        disp_each = disp_each, disp_more_every = disp_more_every, 
+        save_each = save_each, files_folder = files_folder, filename_prefix = filename_prefix)
 
     filename_prefix = "SoSDestabTest"
     larger_size = 3
 
-    using_curheider_attr_destab(n, attr, gammas, larger_size, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+    using_curheider_attr_destab(n, attr, gammas, larger_size, zmax, maxtime, ode_fun_name; 
+        disp_each = disp_each, disp_more_every = disp_more_every, 
+        save_each = save_each, files_folder = files_folder, filename_prefix = filename_prefix)
 end
 
 @testset "Longer series of simulations" begin
-    n = 5
+    n = 9
     g = 5
     attr = BinaryAttributes(g)
-    gammas = [0.5, 1.5, 3.5]
-    zmax = 100
+    gammas = [0.5, 1.5, 2., 3.5]
+    zmax = 1000
     maxtime = 1000.
     ode_fun_name = "Heider7!"
-    disp_each = 60
-    disp_more_every = 0.5
+    disp_each = 0.5
+    disp_more_every = 60
     save_each = 60
     files_folder = "test"
     filename_prefix = "LSoSNumerTest"
 
-    using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+    using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name; 
+        disp_each = disp_each, disp_more_every = disp_more_every, 
+        save_each = save_each, files_folder = files_folder, filename_prefix = filename_prefix)
 
     filename_prefix = "LSoSDestabTest"
-    larger_size = 3
+    larger_size = Int((n+1)/2 + 2)
+    zmax = 300
 
-    using_curheider_attr_destab(n, attr, gammas, larger_size, zmax, maxtime, ode_fun_name, disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+    using_curheider_attr_destab(n, attr, gammas, larger_size, zmax, maxtime, ode_fun_name; 
+        disp_each = disp_each, disp_more_every = disp_more_every, 
+        save_each = save_each, files_folder = files_folder, filename_prefix = filename_prefix)
 end

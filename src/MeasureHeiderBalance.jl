@@ -13,12 +13,12 @@ using Dates
 
 # function to measure HB in the case of a single-layered system with attributes
 # n - number of agents
+# attr - attribute type; contains all information about attributes
 # gamma - coupling strength
 # maxtime - maximal time of calculating differential equations
 # ode_fun - function calculating derivatives
 # solver - function solving different equations
 # show_plot - parameter whether the solution will be plotted. If not transition values are not saved. 
-# attr - attribute type; contains all information about attributes
 # input is optional extra parameters with initial conditions of RL and AL (u0, xy_attr). 
 # If input is empty, random initial conditions are generated. 
 # If not, the first value (possibly empty) should contain initial conditions for RL. 
@@ -128,35 +128,27 @@ end
 
 # Function using `calc_curheider_attr` function to simulate a number of repetitions
 # of solving the system having given parameters:
-# n, betas are number of nodes (scalar) and betas (array) used
-#  zmax - number of repetitions
-#  disp_each - display status every how many realizations (if 0 then do
-#      not display)
-#  disp_more_every - display more detailed status (n, betas) every
-#      certain number of sec (if 0, then do not display)
-#  save_each - how often (in sec) should results be saved (if 0, then save
-#      at the end)
-# %
-#  Last two arguments work like that, that if the specified time has past
-#  then sth is displayed/saved. But it doesn't mean exact time of action.
-#  When the specified time has past means when the current function
-#  (heider function with parameters) finishes.
+# n - number of agents
+# attr - attribute type; contains all information about attributes
+# gammas - a vector of coupling strengths to simulate
+# zmax - number of repetitions
+# maxtime - maximal time of calculating differential equations
+# ode_fun_name - function name calculating derivatives (`string`)
+# 
+# Additional parameters are:
+# disp_each - display status every how many ratio of realizations (if 0 then do not display)
+# disp_more_every - display status every certain number of seconds (if 0, then do not display)
+# save_each - how often (in seconds) should results be saved (if 0, then save at the end)
+
+# 
+# Last two arguments work like that, that if the specified time has past
+# then sth is displayed/saved. But it doesn't mean exact time of action.
+# When the specified time has past means when the current function
+# (heider function with parameters) finishes.
 
 
-# function using calc_curheider (SINGLE LAYER!) function to simulate a number of repetitions:
-# ode_fun_name should be a string, that is later converted into the function with the same name.
-
-
-# function using calc_curheider (SINGLE LAYER!) function to simulate a number of repetitions:
-# ode_fun_name should be a string, that is later converted into the function with the same name.
-# start_2nd_iter_from is whether iterating other gammas should start from "1" or "i".
-
-
-
-# function using calc_curheider_attr (SINGLE LAYER!) function to simulate a number of repetitions:
-# ode_fun_name should be a string, that is later converted into the function with the same name.
-function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String,
-    disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String;
+    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
@@ -242,7 +234,7 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
             end
 
             if disp_each != 0
-                if disp_each <= realization_counter
+                if disp_each <= realization_counter / zmax
                     realization_counter = 0;
                     # displaying
                     display_res(gamma1, rep)
@@ -268,8 +260,8 @@ export using_curheider_attr
 # the outcome of a destabilization of a balanced system.
 # ode_fun_name should be a string, that is later converted into the function with the same name.
 function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
-    maxtime::Float64, ode_fun_name::String,
-    disp_each, disp_more_every, save_each, files_folder, filename_prefix)
+    maxtime::Float64, ode_fun_name::String;
+    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
@@ -385,7 +377,7 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
             end
 
             if disp_each != 0
-                if disp_each <= realization_counter
+                if disp_each <= realization_counter / zmax
                     realization_counter = 0;
                     # displaying
                     display_res(gamma1, rep)
