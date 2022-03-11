@@ -10,7 +10,7 @@ using Suppressor
 
 # using Attributes
 
-#This type is to store simulation results (SINGLE LAYER!)
+#This type is to store simulation results
 struct Result
     #parameters
     n::UInt32 #number of nodes
@@ -149,7 +149,7 @@ function Result(n::Int, g::Int, gammas::Vector{Float64})
 end
 export Result
 
-#save results to MATLAB file
+#save results to MATLAB or jld2 file
 function save_result(res, filename; ext = "mat")
     if ext == "mat"
         if !endswith(filename, "mat")

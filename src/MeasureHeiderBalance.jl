@@ -127,7 +127,11 @@ function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float6
 end
 
 # Function using `calc_curheider_attr` function to simulate a number of repetitions
-# of solving the system having given parameters:
+# of solving the system having given parameters and random initial conditions:
+# Thus, this simulates the influence of attributes on preventing from forming 
+# a polarized state. 
+# 
+# Parameters: 
 # n - number of agents
 # attr - attribute type; contains all information about attributes
 # gammas - a vector of coupling strengths to simulate
@@ -135,18 +139,19 @@ end
 # maxtime - maximal time of calculating differential equations
 # ode_fun_name - function name calculating derivatives (`string`)
 # 
-# Additional parameters are:
-# disp_each - display status every how many ratio of realizations (if 0 then do not display)
-# disp_more_every - display status every certain number of seconds (if 0, then do not display)
-# save_each - how often (in seconds) should results be saved (if 0, then save at the end)
-
+# Additional named arguments are:
+# disp_each - display status every how many ratio of realizations (if 0 then do not display) (default 0.5)
+# disp_more_every - display status every certain number of seconds (if 0, then do not display) (default 600)
+# save_each - how often (in seconds) should results be saved (if 0, then save at the end) (default 600)
+# files_folder - folder name inside the project the results should be saved (default "data")
+# filename_prefix - string that should start each simulation results' file (default "")
 # 
-# Last two arguments work like that, that if the specified time has past
+# `disp_more_every` and `save_each` work like that, that if the specified time has past
 # then sth is displayed/saved. But it doesn't mean exact time of action.
 # When the specified time has past means when the current function
 # (heider function with parameters) finishes.
-
-
+#  
+# Returns `Result` object. 
 function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String;
     disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
 
@@ -256,9 +261,33 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
 end
 export using_curheider_attr
 
-# function using calc_curheider_attr (SINGLE LAYER!) function to simulate
-# the outcome of a destabilization of a balanced system.
-# ode_fun_name should be a string, that is later converted into the function with the same name.
+# Function using `calc_curheider_attr` function to simulate a number of repetitions
+# of solving the system having given parameters and almost a balanced RL.
+# Agents are divided into two groups and form positive links (+0.99) inside those groups
+# and negative (-0.99) to agents outside their group. 
+# Thus, this simulates destabilization of the polarized, initial state. 
+# 
+# Parameters: 
+# n - number of agents
+# attr - attribute type; contains all information about attributes
+# gammas - a vector of coupling strengths to simulate
+# zmax - number of repetitions
+# maxtime - maximal time of calculating differential equations
+# ode_fun_name - function name calculating derivatives (`string`)
+# 
+# Additional named arguments are:
+# disp_each - display status every how many ratio of realizations (if 0 then do not display) (default 0.5)
+# disp_more_every - display status every certain number of seconds (if 0, then do not display) (default 600)
+# save_each - how often (in seconds) should results be saved (if 0, then save at the end) (default 600)
+# files_folder - folder name inside the project the results should be saved (default "data")
+# filename_prefix - string that should start each simulation results' file (default "")
+# 
+# `disp_more_every` and `save_each` work like that, that if the specified time has past
+# then sth is displayed/saved. But it doesn't mean exact time of action.
+# When the specified time has past means when the current function
+# (heider function with parameters) finishes.
+#  
+# Returns `Result` object. 
 function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
     maxtime::Float64, ode_fun_name::String;
     disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
