@@ -147,7 +147,7 @@ end
     disp_each = 0.5
     disp_more_every = 60
     save_each = 60
-    files_folder = "test"
+    files_folder = ["test"]
     filename_prefix = "SoSNumerTest"
 
     using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name; 
@@ -173,7 +173,7 @@ end
     disp_each = 0.5
     disp_more_every = 60
     save_each = 60
-    files_folder = "test"
+    files_folder = ["test"]
     filename_prefix = "LSoSNumerTest"
 
     using_curheider_attr(n, attr, gammas, zmax, maxtime, ode_fun_name; 

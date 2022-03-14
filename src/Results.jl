@@ -61,7 +61,24 @@ struct Result
     # "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
     # "sim", "sim_std",
     # "x_attr_sim", "x_attr_sim_std",
-    # "BR", "BR_std", "stab",
+    # "BR", "BR_std", "LP", "LP_std", "GP", "stab",
+    # "times", "times_std",
+    # "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
+    # "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
+    # "initial_neg_links_count", "initial_neg_links_count_std",
+    # "Delta0", "Delta0_std", "Delta1", "Delta1_std", "Delta2",
+    # "Delta2_std", "Delta3", "Delta3_std"]
+
+    # Following is the different way of keeping and later saving data. 
+    # Previously (above) data was separated into AL-balanced and AL-unbalanced cases. Below it is not. 
+    data2::Array{Any,2} #all data listed in an array
+    interpretation2::Array{String,1} #interpretation of columns of above field
+    # interpretation = ["N", "G", "gamma", "maxtime", "ode_fun_name", 
+    # "attr", "attr_name", "attr_threshold",  "attr_degeneracy", 
+    # "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
+    # "sim", "sim_std",
+    # "x_attr_sim", "x_attr_sim_std",
+    # "BR", "BR_std", "LP", "LP_std", "GP", "stab",
     # "times", "times_std",
     # "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
     # "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
@@ -119,13 +136,30 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
         "Delta2_std", "Delta3", "Delta3_std"]
     data = zeros(Float64, nb*2, length(interpretation))
 
+    interpretation2 = ["N", "G", "gamma", "maxtime", "ode_fun_name", 
+        "attr_name", "attr_threshold",  "attr_degeneracy", 
+        "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
+        "sim", "sim_std",
+        "x_attr_sim", "x_attr_sim_std",
+        "BR", "BR_std", "LP", "LP_std", "GP", "stab",
+        "times", "times_std",
+        "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
+        "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
+        "initial_neg_links_count", "initial_neg_links_count_std",
+        "Delta0", "Delta0_std", "Delta1", "Delta1_std", "Delta2",
+        "Delta2_std", "Delta3", "Delta3_std"]
+    data2 = Array{Any, 2}(undef, nb, length(interpretation2))
+    data2[:, 1:4] .= 0
+    data2[:, 5:6] .= ""
+    data2[:, 7:end] .= 0
+
     Result(n, attr.g, gammas, maxtime, ode_fun_name, get_name(attr), get_threshold(attr), get_degeneracy(attr),
         HB, HB_x, HB_attr, HB_only_weights, BR, paradise, hell,
         weak_balance_in_complete_graph, local_polarization, global_polarization,
         initial_neg_links_count, initial_neg_links_count_std,
         links_destab_changed, links_destab_changed_std, Deltas, Deltas_std,
         sim, x_attr_sim, stab, times, BR_std, local_polarization_std,
-        sim_std, x_attr_sim_std, times_std, zmax, data, interpretation)
+        sim_std, x_attr_sim_std, times_std, zmax, data, interpretation, data2, interpretation2)
 end
 export Result
 
@@ -170,18 +204,22 @@ function save_result(res, filename; ext = "mat")
 
             #creating filename
             local filename_g
-            @suppress filename_g = savename(filename, (gamma = gamma, ), "jld2")
+            @suppress filename_g = savename(filename, (gamma = gamma, ))
+            filename_g2 = filename_g*"_1.jld2"
 
-            data_row = res.data[2*i-1, :]
+            # data_row = res.data[2*i-1, :]
+            data_row = res.data2[i, :]
             @suppress @tagsave(
-                filename_g,
-                Dict(res.interpretation .=> data_row)
+                filename_g2,
+                # Dict(res.interpretation .=> data_row)
+                Dict(res.interpretation2 .=> data_row)
             )
-            data_row = res.data[2*i, :]
-            @suppress @tagsave(
-                filename_g,
-                Dict(res.interpretation .=> data_row)
-            )
+            # filename_g2 = filename_g*"_2.jld2"
+            # data_row = res.data[2*i, :]
+            # @suppress @tagsave(
+            #     filename_g2,
+            #     Dict(res.interpretation .=> data_row)
+            # )
         end
     end
     
@@ -273,7 +311,7 @@ function update_result!(res::Result, fields)
     #     throw(y)
     # end
     #line when HB is not in attribute matrix
-    res.data[firstline+1,:] = [res.n, res.g, res.gammas[i], false, smf,
+    res.data[firstline + 1,:] = [res.n, res.g, res.gammas[i], false, smf,
         sum(HB[mask_false])/smf, sum(HB_x[mask_false])/smf,
         sum(paradise[mask_false])/smf, sum(hell[mask_false])/smf,
         sum(weak_balance_in_complete_graph[mask_false])/smf,
@@ -292,6 +330,29 @@ function update_result!(res::Result, fields)
         sum(Deltas[2, mask_false])/smf, std(Deltas[2, 1:rep][mask_false[1:rep]]),
         sum(Deltas[3, mask_false])/smf, std(Deltas[3, 1:rep][mask_false[1:rep]]),
         sum(Deltas[4, mask_false])/smf, std(Deltas[4, 1:rep][mask_false[1:rep]])];
+    
+    # "maxtime", "ode_fun_name", 
+    # "attr", "attr_name", "attr_threshold",  "attr_degeneracy", 
+    res.data2[i,:] = [res.n, res.g, res.gammas[i], res.maxtime, res.ode_fun_name, 
+        res.attr_name, res.attr_threshold, res.attr_degeneracy, rep, 
+        sum(HB)/rep, sum(HB_x)/rep,
+        sum(paradise)/rep, sum(hell)/rep,
+        sum(weak_balance_in_complete_graph)/rep,
+        sum(sim)/rep, std(sim[1:rep]),
+        sum(x_attr_sim)/rep, std(x_attr_sim[1:rep]),
+        sum(BR)/rep, std(BR[1:rep]),
+        sum(local_polarization)/rep, std(local_polarization[1:rep]),
+        sum(global_polarization)/rep, sum(stab)/rep,
+        sum(times)/rep, std(times[1:rep]),
+        sum(links_destab_changed[1, mask_false])/rep, std(links_destab_changed[1, 1:rep]),
+        sum(links_destab_changed[2, mask_false])/rep, std(links_destab_changed[2, 1:rep]),
+        sum(links_destab_changed[3, mask_false])/rep, std(links_destab_changed[3, 1:rep]),
+        sum(links_destab_changed[4, mask_false])/rep, std(links_destab_changed[4, 1:rep]),
+        sum(initial_neg_links_count)/rep, std(initial_neg_links_count[1:rep]),
+        sum(Deltas[1, mask_false])/rep, std(Deltas[1, 1:rep]),
+        sum(Deltas[2, mask_false])/rep, std(Deltas[2, 1:rep]),
+        sum(Deltas[3, mask_false])/rep, std(Deltas[3, 1:rep]),
+        sum(Deltas[4, mask_false])/rep, std(Deltas[4, 1:rep])];
     # "zmax", "HB", "HB1", "HB2", "HB12", "sim", "sim_std", "stab",
     # "times", "times_std"]
 end

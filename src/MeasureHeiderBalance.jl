@@ -113,7 +113,7 @@ export calc_curheider_attr
 #   `filename`
 #   filename without extension
 function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String,
-    files_folder::String, filename_prefix::String)
+    files_folder::Vector{String}, filename_prefix::String)
 
     r = Result(n, attr, gammas, maxtime, ode_fun_name)
 
@@ -121,7 +121,7 @@ function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float6
     file_params = savename(prefix, r, "mat", sort=false)
     file_params = replace(file_params, "attr_degeneracy"=>"v")
 
-    filename = projectdir(files_folder, file_params)
+    filename = projectdir(files_folder..., file_params)
     save_result(r, filename); #''allocating'' place
     return r, filename
 end
@@ -143,7 +143,8 @@ end
 # disp_each - display status every how many ratio of realizations (if 0 then do not display) (default 0.5)
 # disp_more_every - display status every certain number of seconds (if 0, then do not display) (default 600)
 # save_each - how often (in seconds) should results be saved (if 0, then save at the end) (default 600)
-# files_folder - folder name inside the project the results should be saved (default "data")
+# files_folder - folder name inside the project the results should be saved (default "data"). 
+#       This can be also an array of folder names in the correct folder structure. 
 # filename_prefix - string that should start each simulation results' file (default "")
 # 
 # `disp_more_every` and `save_each` work like that, that if the specified time has past
@@ -153,7 +154,7 @@ end
 #  
 # Returns `Result` object. 
 function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String;
-    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
+    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::Vector{String} = ["data",], filename_prefix::String = "")
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
@@ -288,6 +289,7 @@ export using_curheider_attr
 # disp_more_every - display status every certain number of seconds (if 0, then do not display) (default 600)
 # save_each - how often (in seconds) should results be saved (if 0, then save at the end) (default 600)
 # files_folder - folder name inside the project the results should be saved (default "data")
+#       This can be also an array of folder names in the correct folder structure. 
 # filename_prefix - string that should start each simulation results' file (default "")
 # 
 # `disp_more_every` and `save_each` work like that, that if the specified time has past
@@ -298,7 +300,7 @@ export using_curheider_attr
 # Returns `Result` object. 
 function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
     maxtime::Float64, ode_fun_name::String;
-    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::String = "data", filename_prefix::String = "")
+    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::Vector{String} = ["data",], filename_prefix::String = "")
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
