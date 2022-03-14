@@ -220,7 +220,11 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
                 if disp_more_every < time() - time_disp
                     time_disp = time();
                     # displaying
-                    display_res(gamma1, rep)
+                    g = attr.g
+                    v = r.attr_degeneracy
+                    a = r.attr_name
+                    # display_res(@ntuple(rep, a, n, g, v, gamma1))
+                    display_res(; rep, a, n, g, v, gamma1)
                 end
             end
 
@@ -242,7 +246,11 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
                 if disp_each <= realization_counter / zmax
                     realization_counter = 0;
                     # displaying
-                    display_res(gamma1, rep)
+                    g = attr.g
+                    v = r.attr_degeneracy
+                    a = r.attr_name
+                    # display_res(@ntuple(rep, a, n, g, v, gamma1))
+                    display_res(; rep, a, n, g, v, gamma1)
                 end
             end
         end
@@ -387,7 +395,12 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                 if disp_more_every < time() - time_disp
                     time_disp = time();
                     # displaying
-                    display_res(gamma1, rep)
+                    # display_res(gamma1, rep)
+                    g = attr.g
+                    v = r.attr_degeneracy
+                    a = r.attr_name
+                    # display_res(@ntuple(rep, a, n, g, v, gamma1, larger_size))
+                    display_res(; rep, a, n, g, v, gamma1, larger_size)
                 end
             end
 
@@ -409,7 +422,11 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                 if disp_each <= realization_counter / zmax
                     realization_counter = 0;
                     # displaying
-                    display_res(gamma1, rep)
+                    g = attr.g
+                    v = r.attr_degeneracy
+                    a = r.attr_name
+                    # display_res(@ntuple(rep, a, n, g, v, gamma1, larger_size))
+                    display_res(; rep, a, n, g, v, gamma1, larger_size)
                 end
             end
         end

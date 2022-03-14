@@ -1,21 +1,19 @@
 # Figure 1
-#Unordered attributes
-using MeasureHeiderBalance
-using Attributes
+using DrWatson
+quickactivate(@__DIR__)
 
 ns = [5,9]#[9,15,25]
 reps = [1000,1000]
 reps_dict = Dict(zip(ns, reps))
-gs = [1:2:21...]
-gs = [25,29,33,37,41,45,49,55,61,67,73,81,89,97]
-# gs = 3;
+# two parts of simulations
+gs = [1:2:21...] 
+# gs = [25,29,33,37,41,45,49,55,61,67,73,81,89,97]
 threshold = 0.5;
-vs = [4];
-vs = [1000]
+vs = [4, @onlyif(:attr_types == "OA",  1000)] #includes CA
 
 attr_types = ["BA", "UA", "OA", "UPA"]
 # attr_types = ["BA", "OA", "UPA"]
-attr_types = ["OA"]
+# attr_types = ["OA"]
 
 #its = its[4:end]
 

@@ -1,5 +1,7 @@
 # file contains some utility functions. 
 
+using Dates
+
 # module MyUtil
 
 
@@ -33,6 +35,10 @@ function maxk(a, k)
 end
 export maxk
 
+macro Name(arg)
+    string(arg)
+ end
+
 #function for displaying progress
 function display_res(names, vars)
     cur = Dates.format(now(), "HH:MM:SS dd.mm.yyyy");
@@ -44,7 +50,23 @@ function display_res(names, vars)
     return nothing;
 end
 
-#function for displaying progress used in function below
+function display_res(ntuple::NamedTuple)
+    cur = Dates.format(now(), "HH:MM:SS dd.mm.yyyy");
+    str = savename(ntuple, connector="; ", sort = false)
+
+    println("Just finished: $str" * ". Time: $cur");
+    return nothing;
+end
+
+function display_res(; kwargs...)
+    ntuple = NamedTuple(kwargs)
+    cur = Dates.format(now(), "HH:MM:SS dd.mm.yyyy");
+    str = string(ntuple)
+
+    println("Just finished: $str. Time: $cur");
+    return nothing;
+end
+
 function display_res(gamma::Float64, z::Int)
     cur = Dates.format(now(), "HH:MM:SS dd.mm.yyyy");
     println("Just finished: z = $z; gamma = $gamma; " *

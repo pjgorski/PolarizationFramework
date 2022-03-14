@@ -297,9 +297,5 @@ function update_result!(res::Result, fields)
 end
 export update_result!
 
-macro Name(arg)
-   string(arg)
-end
-
 DrWatson.allaccess(::Result) = (:attr_name, :n, :g, :attr_degeneracy)
 # end
