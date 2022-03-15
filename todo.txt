@@ -1,0 +1,6 @@
+TODO:
+
+-script with analysis
+
+-korekta składni, wyglądu kodu
+-readme
