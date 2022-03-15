@@ -89,13 +89,19 @@ end
 export Result
 
 # Constructor
-function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String)
-    nb = length(gammas);
+function Result(
+    n::Int,
+    attr::AbstractAttributes,
+    gammas::Vector{Float64},
+    maxtime::Float64,
+    ode_fun_name::String,
+)
+    nb = length(gammas)
 
-    HB = zeros(Float64, nb);
+    HB = zeros(Float64, nb)
     HB_x = copy(HB)
-    HB_attr = copy(HB);
-    HB_only_weights = copy(HB);
+    HB_attr = copy(HB)
+    HB_only_weights = copy(HB)
     BR = copy(HB)
     paradise = copy(HB)
     hell = copy(HB)
@@ -109,61 +115,165 @@ function Result(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxti
     links_destab_changed = copy(Deltas)
 
     sim = zeros(Float64, nb)
-    x_attr_sim = copy(sim);
-    stab = copy(sim);
-    times = copy(sim);
+    x_attr_sim = copy(sim)
+    stab = copy(sim)
+    times = copy(sim)
 
     BR_std = copy(sim)
     local_polarization_std = copy(sim)
     links_destab_changed_std = copy(Deltas)
-    Deltas_std = copy(Deltas);
+    Deltas_std = copy(Deltas)
     sim_std = copy(sim)
-    x_attr_sim_std = copy(sim);
+    x_attr_sim_std = copy(sim)
     times_std = copy(sim)
 
-    zmax = zeros(UInt32, nb);
+    zmax = zeros(UInt32, nb)
 
-    interpretation = ["N", "G", "gamma", "HB_in_attr",
-        "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
-        "sim", "sim_std",
-        "x_attr_sim", "x_attr_sim_std",
-        "BR", "BR_std", "LP", "LP_std", "GP", "stab",
-        "times", "times_std",
-        "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
-        "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
-        "initial_neg_links_count", "initial_neg_links_count_std",
-        "Delta0", "Delta0_std", "Delta1", "Delta1_std", "Delta2",
-        "Delta2_std", "Delta3", "Delta3_std"]
-    data = zeros(Float64, nb*2, length(interpretation))
+    interpretation = [
+        "N",
+        "G",
+        "gamma",
+        "HB_in_attr",
+        "zmax",
+        "HB",
+        "HB_x",
+        "paradise",
+        "hell",
+        "weak_balance_in_complete_graph",
+        "sim",
+        "sim_std",
+        "x_attr_sim",
+        "x_attr_sim_std",
+        "BR",
+        "BR_std",
+        "LP",
+        "LP_std",
+        "GP",
+        "stab",
+        "times",
+        "times_std",
+        "pos_links_destab",
+        "pos_links_destab_std",
+        "neg_links_destab",
+        "neg_links_destab_std",
+        "pos_links_changed",
+        "pos_links_changed_std",
+        "neg_links_changed",
+        "neg_links_changed_std",
+        "initial_neg_links_count",
+        "initial_neg_links_count_std",
+        "Delta0",
+        "Delta0_std",
+        "Delta1",
+        "Delta1_std",
+        "Delta2",
+        "Delta2_std",
+        "Delta3",
+        "Delta3_std",
+    ]
+    data = zeros(Float64, nb * 2, length(interpretation))
 
-    interpretation2 = ["N", "G", "gamma", "maxtime", "ode_fun_name", 
-        "attr_name", "attr_threshold",  "attr_degeneracy", 
-        "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
-        "sim", "sim_std",
-        "x_attr_sim", "x_attr_sim_std",
-        "BR", "BR_std", "LP", "LP_std", "GP", "stab",
-        "times", "times_std",
-        "pos_links_destab", "pos_links_destab_std", "neg_links_destab", "neg_links_destab_std",
-        "pos_links_changed", "pos_links_changed_std", "neg_links_changed", "neg_links_changed_std",
-        "initial_neg_links_count", "initial_neg_links_count_std",
-        "Delta0", "Delta0_std", "Delta1", "Delta1_std", "Delta2",
-        "Delta2_std", "Delta3", "Delta3_std"]
-    data2 = Array{Any, 2}(undef, nb, length(interpretation2))
+    interpretation2 = [
+        "N",
+        "G",
+        "gamma",
+        "maxtime",
+        "ode_fun_name",
+        "attr_name",
+        "attr_threshold",
+        "attr_degeneracy",
+        "zmax",
+        "HB",
+        "HB_x",
+        "paradise",
+        "hell",
+        "weak_balance_in_complete_graph",
+        "sim",
+        "sim_std",
+        "x_attr_sim",
+        "x_attr_sim_std",
+        "BR",
+        "BR_std",
+        "LP",
+        "LP_std",
+        "GP",
+        "stab",
+        "times",
+        "times_std",
+        "pos_links_destab",
+        "pos_links_destab_std",
+        "neg_links_destab",
+        "neg_links_destab_std",
+        "pos_links_changed",
+        "pos_links_changed_std",
+        "neg_links_changed",
+        "neg_links_changed_std",
+        "initial_neg_links_count",
+        "initial_neg_links_count_std",
+        "Delta0",
+        "Delta0_std",
+        "Delta1",
+        "Delta1_std",
+        "Delta2",
+        "Delta2_std",
+        "Delta3",
+        "Delta3_std",
+    ]
+    data2 = Array{Any,2}(undef, nb, length(interpretation2))
     data2[:, 1:4] .= 0
     data2[:, 5:6] .= ""
     data2[:, 7:end] .= 0
 
-    Result(n, attr.g, gammas, maxtime, ode_fun_name, get_name(attr), get_threshold(attr), get_degeneracy(attr),
-        HB, HB_x, HB_attr, HB_only_weights, BR, paradise, hell,
-        weak_balance_in_complete_graph, local_polarization, global_polarization,
-        initial_neg_links_count, initial_neg_links_count_std,
-        links_destab_changed, links_destab_changed_std, Deltas, Deltas_std,
-        sim, x_attr_sim, stab, times, BR_std, local_polarization_std,
-        sim_std, x_attr_sim_std, times_std, zmax, data, interpretation, data2, interpretation2)
+    Result(
+        n,
+        attr.g,
+        gammas,
+        maxtime,
+        ode_fun_name,
+        get_name(attr),
+        get_threshold(attr),
+        get_degeneracy(attr),
+        HB,
+        HB_x,
+        HB_attr,
+        HB_only_weights,
+        BR,
+        paradise,
+        hell,
+        weak_balance_in_complete_graph,
+        local_polarization,
+        global_polarization,
+        initial_neg_links_count,
+        initial_neg_links_count_std,
+        links_destab_changed,
+        links_destab_changed_std,
+        Deltas,
+        Deltas_std,
+        sim,
+        x_attr_sim,
+        stab,
+        times,
+        BR_std,
+        local_polarization_std,
+        sim_std,
+        x_attr_sim_std,
+        times_std,
+        zmax,
+        data,
+        interpretation,
+        data2,
+        interpretation2,
+    )
 end
 export Result
 
-function Result(n::Int, g::Int, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String)
+function Result(
+    n::Int,
+    g::Int,
+    gammas::Vector{Float64},
+    maxtime::Float64,
+    ode_fun_name::String,
+)
     Result(n, BinaryAttributes(g), gammas, maxtime, ode_fun_name)
 end
 export Result
@@ -174,12 +284,12 @@ end
 export Result
 
 function Result(n::Int, g::Int, gammas::Vector{Float64}, ode_fun_name::String)
-    Result(n, g, gammas, 1000., ode_fun_name)
+    Result(n, g, gammas, 1000.0, ode_fun_name)
 end
 export Result
 
 function Result(n::Int, g::Int, gammas::Vector{Float64})
-    Result(n, g, gammas, 1000.)
+    Result(n, g, gammas, 1000.0)
 end
 export Result
 
@@ -187,14 +297,14 @@ export Result
 function save_result(res, filename; ext = "mat")
     if ext == "mat"
         if !endswith(filename, "mat")
-            filename = filename*".mat"
+            filename = filename * ".mat"
         end
         file = matopen(filename, "w")
         write(file, "result", res)
         close(file)
     elseif ext == "jld2"
         if endswith(filename, r"\.[0-9a-z]+$")
-            filename = replace(filename, (r"\.[0-9a-z]+$"=>""))
+            filename = replace(filename, (r"\.[0-9a-z]+$" => ""))
         end
         for (i, gamma) in enumerate(res.gammas)
             # This was not yet simulated. End of saving
@@ -204,8 +314,8 @@ function save_result(res, filename; ext = "mat")
 
             #creating filename
             local filename_g
-            @suppress filename_g = savename(filename, (gamma = gamma, ))
-            filename_g2 = filename_g*"_1.jld2"
+            @suppress filename_g = savename(filename, (gamma = gamma,))
+            filename_g2 = filename_g * "_1.jld2"
 
             # data_row = res.data[2*i-1, :]
             data_row = res.data2[i, :]
@@ -222,13 +332,13 @@ function save_result(res, filename; ext = "mat")
             # )
         end
     end
-    
+
 end
 export save_result
 
 function read_result(filename, varname)
     if !endswith(filename, ".mat")
-        filename *= ".mat";
+        filename *= ".mat"
     end
     file = matopen(filename)
     out = read(file, varname) # note that this does NOT introduce a variable ``varname`` into scope
@@ -239,14 +349,29 @@ export read_result
 
 #function to update result fields based on elements of fields tuple
 function update_result!(res::Result, fields)
-    HB, HB_x, HB_attr, sim, x_attr_sim, BR, paradise, hell,
-        initial_neg_links_count, links_destab_changed, Deltas,
-        weak_balance_in_complete_graph, local_polarization, global_polarization, stab, times,
-        i, rep, firstline = fields;
-    res.HB[i] = sum(HB) / rep;
+    HB,
+    HB_x,
+    HB_attr,
+    sim,
+    x_attr_sim,
+    BR,
+    paradise,
+    hell,
+    initial_neg_links_count,
+    links_destab_changed,
+    Deltas,
+    weak_balance_in_complete_graph,
+    local_polarization,
+    global_polarization,
+    stab,
+    times,
+    i,
+    rep,
+    firstline = fields
+    res.HB[i] = sum(HB) / rep
     res.HB_x[i] = sum(HB_x) / rep
-    res.HB_attr[i] = sum(HB_attr) / rep;
-    res.HB_only_weights[i] = sum(HB[HB_attr .== 0]) / ((1-res.HB_attr[i])*rep)
+    res.HB_attr[i] = sum(HB_attr) / rep
+    res.HB_only_weights[i] = sum(HB[HB_attr.==0]) / ((1 - res.HB_attr[i]) * rep)
     res.BR[i] = sum(BR) / rep
     res.paradise[i] = sum(paradise) / rep
     res.hell[i] = sum(hell) / rep
@@ -255,52 +380,74 @@ function update_result!(res::Result, fields)
     res.global_polarization[i] = sum(global_polarization) / rep
 
     res.initial_neg_links_count[i] = sum(initial_neg_links_count) / rep
-    res.links_destab_changed[:, i] = sum(links_destab_changed, dims=2) / rep
-    res.Deltas[:, i] = sum(Deltas, dims=2) / rep
+    res.links_destab_changed[:, i] = sum(links_destab_changed, dims = 2) / rep
+    res.Deltas[:, i] = sum(Deltas, dims = 2) / rep
 
-    res.sim[i] = sum(sim) / rep;
-    res.x_attr_sim[i] = sum(x_attr_sim) / rep;
-    res.stab[i] = sum(stab) / rep;
-    res.times[i] = sum(times) / rep;
+    res.sim[i] = sum(sim) / rep
+    res.x_attr_sim[i] = sum(x_attr_sim) / rep
+    res.stab[i] = sum(stab) / rep
+    res.times[i] = sum(times) / rep
 
     res.BR_std[i] = std(BR[1:rep])
     res.local_polarization_std[i] = std(local_polarization[1:rep])
     res.initial_neg_links_count_std[i] = std(initial_neg_links_count[1:rep])
-    res.Deltas_std[:, i] = std(Deltas[:, 1:rep], dims=2)
-    res.links_destab_changed_std[:, i] = std(links_destab_changed[:, 1:rep], dims=2)
+    res.Deltas_std[:, i] = std(Deltas[:, 1:rep], dims = 2)
+    res.links_destab_changed_std[:, i] = std(links_destab_changed[:, 1:rep], dims = 2)
 
-    res.sim_std[i] = std(sim[1:rep]);
-    res.x_attr_sim_std[i] = std(x_attr_sim[1:rep]);
-    res.times_std[i] = std(times[1:rep]);
+    res.sim_std[i] = std(sim[1:rep])
+    res.x_attr_sim_std[i] = std(x_attr_sim[1:rep])
+    res.times_std[i] = std(times[1:rep])
 
-    res.zmax[i] = rep;
+    res.zmax[i] = rep
 
     #line when HB is in attribute matrix
     mask_true = (HB_attr .== 1)
     smt = sum(mask_true)
     mask_false = .!mask_true
-    smf = rep - smt;
+    smf = rep - smt
     # try
-    res.data[firstline,:] = [res.n, res.g, res.gammas[i], true, smt,
-        sum(HB[mask_true])/smt, sum(HB_x[mask_true])/smt,
-        sum(paradise[mask_true])/smt, sum(hell[mask_true])/smt,
-        sum(weak_balance_in_complete_graph[mask_true])/smt,
-        sum(sim[mask_true])/smt, std(sim[1:rep][mask_true[1:rep]]),
-        sum(x_attr_sim[mask_true])/smt, std(x_attr_sim[1:rep][mask_true[1:rep]]),
-        sum(BR[mask_true])/smt, std(BR[1:rep][mask_true[1:rep]]),
-        sum(local_polarization[mask_true])/smt, std(local_polarization[1:rep][mask_true[1:rep]]),
-        sum(global_polarization[mask_true])/smt,
-        sum(stab[mask_true])/smt,
-        sum(times[mask_true])/smt, std(times[1:rep][mask_true[1:rep]]),
-        sum(links_destab_changed[1, mask_true])/smt, std(links_destab_changed[1, 1:rep][mask_true[1:rep]]),
-        sum(links_destab_changed[2, mask_true])/smt, std(links_destab_changed[2, 1:rep][mask_true[1:rep]]),
-        sum(links_destab_changed[3, mask_true])/smt, std(links_destab_changed[3, 1:rep][mask_true[1:rep]]),
-        sum(links_destab_changed[4, mask_true])/smt, std(links_destab_changed[4, 1:rep][mask_true[1:rep]]),
-        sum(initial_neg_links_count[mask_true])/smt, std(initial_neg_links_count[1:rep][mask_true[1:rep]]),
-        sum(Deltas[1, mask_true])/smt, std(Deltas[1, 1:rep][mask_true[1:rep]]),
-        sum(Deltas[2, mask_true])/smt, std(Deltas[2, 1:rep][mask_true[1:rep]]),
-        sum(Deltas[3, mask_true])/smt, std(Deltas[3, 1:rep][mask_true[1:rep]]),
-        sum(Deltas[4, mask_true])/smt, std(Deltas[4, 1:rep][mask_true[1:rep]])];
+    res.data[firstline, :] = [
+        res.n,
+        res.g,
+        res.gammas[i],
+        true,
+        smt,
+        sum(HB[mask_true]) / smt,
+        sum(HB_x[mask_true]) / smt,
+        sum(paradise[mask_true]) / smt,
+        sum(hell[mask_true]) / smt,
+        sum(weak_balance_in_complete_graph[mask_true]) / smt,
+        sum(sim[mask_true]) / smt,
+        std(sim[1:rep][mask_true[1:rep]]),
+        sum(x_attr_sim[mask_true]) / smt,
+        std(x_attr_sim[1:rep][mask_true[1:rep]]),
+        sum(BR[mask_true]) / smt,
+        std(BR[1:rep][mask_true[1:rep]]),
+        sum(local_polarization[mask_true]) / smt,
+        std(local_polarization[1:rep][mask_true[1:rep]]),
+        sum(global_polarization[mask_true]) / smt,
+        sum(stab[mask_true]) / smt,
+        sum(times[mask_true]) / smt,
+        std(times[1:rep][mask_true[1:rep]]),
+        sum(links_destab_changed[1, mask_true]) / smt,
+        std(links_destab_changed[1, 1:rep][mask_true[1:rep]]),
+        sum(links_destab_changed[2, mask_true]) / smt,
+        std(links_destab_changed[2, 1:rep][mask_true[1:rep]]),
+        sum(links_destab_changed[3, mask_true]) / smt,
+        std(links_destab_changed[3, 1:rep][mask_true[1:rep]]),
+        sum(links_destab_changed[4, mask_true]) / smt,
+        std(links_destab_changed[4, 1:rep][mask_true[1:rep]]),
+        sum(initial_neg_links_count[mask_true]) / smt,
+        std(initial_neg_links_count[1:rep][mask_true[1:rep]]),
+        sum(Deltas[1, mask_true]) / smt,
+        std(Deltas[1, 1:rep][mask_true[1:rep]]),
+        sum(Deltas[2, mask_true]) / smt,
+        std(Deltas[2, 1:rep][mask_true[1:rep]]),
+        sum(Deltas[3, mask_true]) / smt,
+        std(Deltas[3, 1:rep][mask_true[1:rep]]),
+        sum(Deltas[4, mask_true]) / smt,
+        std(Deltas[4, 1:rep][mask_true[1:rep]]),
+    ]
     # catch y
     #     display([firstline, rep])
     #     display([length(mask_true), sum(mask_true), smt])
@@ -311,48 +458,97 @@ function update_result!(res::Result, fields)
     #     throw(y)
     # end
     #line when HB is not in attribute matrix
-    res.data[firstline + 1,:] = [res.n, res.g, res.gammas[i], false, smf,
-        sum(HB[mask_false])/smf, sum(HB_x[mask_false])/smf,
-        sum(paradise[mask_false])/smf, sum(hell[mask_false])/smf,
-        sum(weak_balance_in_complete_graph[mask_false])/smf,
-        sum(sim[mask_false])/smf, std(sim[1:rep][mask_false[1:rep]]),
-        sum(x_attr_sim[mask_false])/smf, std(x_attr_sim[1:rep][mask_false[1:rep]]),
-        sum(BR[mask_false])/smf, std(BR[1:rep][mask_false[1:rep]]),
-        sum(local_polarization[mask_false])/smf, std(local_polarization[1:rep][mask_false[1:rep]]),
-        sum(global_polarization[mask_false])/smf, sum(stab[mask_false])/smf,
-        sum(times[mask_false])/smf, std(times[1:rep][mask_false[1:rep]]),
-        sum(links_destab_changed[1, mask_false])/smf, std(links_destab_changed[1, 1:rep][mask_false[1:rep]]),
-        sum(links_destab_changed[2, mask_false])/smf, std(links_destab_changed[2, 1:rep][mask_false[1:rep]]),
-        sum(links_destab_changed[3, mask_false])/smf, std(links_destab_changed[3, 1:rep][mask_false[1:rep]]),
-        sum(links_destab_changed[4, mask_false])/smf, std(links_destab_changed[4, 1:rep][mask_false[1:rep]]),
-        sum(initial_neg_links_count[mask_false])/smf, std(initial_neg_links_count[1:rep][mask_false[1:rep]]),
-        sum(Deltas[1, mask_false])/smf, std(Deltas[1, 1:rep][mask_false[1:rep]]),
-        sum(Deltas[2, mask_false])/smf, std(Deltas[2, 1:rep][mask_false[1:rep]]),
-        sum(Deltas[3, mask_false])/smf, std(Deltas[3, 1:rep][mask_false[1:rep]]),
-        sum(Deltas[4, mask_false])/smf, std(Deltas[4, 1:rep][mask_false[1:rep]])];
-    
+    res.data[firstline+1, :] = [
+        res.n,
+        res.g,
+        res.gammas[i],
+        false,
+        smf,
+        sum(HB[mask_false]) / smf,
+        sum(HB_x[mask_false]) / smf,
+        sum(paradise[mask_false]) / smf,
+        sum(hell[mask_false]) / smf,
+        sum(weak_balance_in_complete_graph[mask_false]) / smf,
+        sum(sim[mask_false]) / smf,
+        std(sim[1:rep][mask_false[1:rep]]),
+        sum(x_attr_sim[mask_false]) / smf,
+        std(x_attr_sim[1:rep][mask_false[1:rep]]),
+        sum(BR[mask_false]) / smf,
+        std(BR[1:rep][mask_false[1:rep]]),
+        sum(local_polarization[mask_false]) / smf,
+        std(local_polarization[1:rep][mask_false[1:rep]]),
+        sum(global_polarization[mask_false]) / smf,
+        sum(stab[mask_false]) / smf,
+        sum(times[mask_false]) / smf,
+        std(times[1:rep][mask_false[1:rep]]),
+        sum(links_destab_changed[1, mask_false]) / smf,
+        std(links_destab_changed[1, 1:rep][mask_false[1:rep]]),
+        sum(links_destab_changed[2, mask_false]) / smf,
+        std(links_destab_changed[2, 1:rep][mask_false[1:rep]]),
+        sum(links_destab_changed[3, mask_false]) / smf,
+        std(links_destab_changed[3, 1:rep][mask_false[1:rep]]),
+        sum(links_destab_changed[4, mask_false]) / smf,
+        std(links_destab_changed[4, 1:rep][mask_false[1:rep]]),
+        sum(initial_neg_links_count[mask_false]) / smf,
+        std(initial_neg_links_count[1:rep][mask_false[1:rep]]),
+        sum(Deltas[1, mask_false]) / smf,
+        std(Deltas[1, 1:rep][mask_false[1:rep]]),
+        sum(Deltas[2, mask_false]) / smf,
+        std(Deltas[2, 1:rep][mask_false[1:rep]]),
+        sum(Deltas[3, mask_false]) / smf,
+        std(Deltas[3, 1:rep][mask_false[1:rep]]),
+        sum(Deltas[4, mask_false]) / smf,
+        std(Deltas[4, 1:rep][mask_false[1:rep]]),
+    ]
+
     # "maxtime", "ode_fun_name", 
     # "attr", "attr_name", "attr_threshold",  "attr_degeneracy", 
-    res.data2[i,:] = [res.n, res.g, res.gammas[i], res.maxtime, res.ode_fun_name, 
-        res.attr_name, res.attr_threshold, res.attr_degeneracy, rep, 
-        sum(HB)/rep, sum(HB_x)/rep,
-        sum(paradise)/rep, sum(hell)/rep,
-        sum(weak_balance_in_complete_graph)/rep,
-        sum(sim)/rep, std(sim[1:rep]),
-        sum(x_attr_sim)/rep, std(x_attr_sim[1:rep]),
-        sum(BR)/rep, std(BR[1:rep]),
-        sum(local_polarization)/rep, std(local_polarization[1:rep]),
-        sum(global_polarization)/rep, sum(stab)/rep,
-        sum(times)/rep, std(times[1:rep]),
-        sum(links_destab_changed[1, mask_false])/rep, std(links_destab_changed[1, 1:rep]),
-        sum(links_destab_changed[2, mask_false])/rep, std(links_destab_changed[2, 1:rep]),
-        sum(links_destab_changed[3, mask_false])/rep, std(links_destab_changed[3, 1:rep]),
-        sum(links_destab_changed[4, mask_false])/rep, std(links_destab_changed[4, 1:rep]),
-        sum(initial_neg_links_count)/rep, std(initial_neg_links_count[1:rep]),
-        sum(Deltas[1, mask_false])/rep, std(Deltas[1, 1:rep]),
-        sum(Deltas[2, mask_false])/rep, std(Deltas[2, 1:rep]),
-        sum(Deltas[3, mask_false])/rep, std(Deltas[3, 1:rep]),
-        sum(Deltas[4, mask_false])/rep, std(Deltas[4, 1:rep])];
+    res.data2[i, :] = [
+        res.n,
+        res.g,
+        res.gammas[i],
+        res.maxtime,
+        res.ode_fun_name,
+        res.attr_name,
+        res.attr_threshold,
+        res.attr_degeneracy,
+        rep,
+        sum(HB) / rep,
+        sum(HB_x) / rep,
+        sum(paradise) / rep,
+        sum(hell) / rep,
+        sum(weak_balance_in_complete_graph) / rep,
+        sum(sim) / rep,
+        std(sim[1:rep]),
+        sum(x_attr_sim) / rep,
+        std(x_attr_sim[1:rep]),
+        sum(BR) / rep,
+        std(BR[1:rep]),
+        sum(local_polarization) / rep,
+        std(local_polarization[1:rep]),
+        sum(global_polarization) / rep,
+        sum(stab) / rep,
+        sum(times) / rep,
+        std(times[1:rep]),
+        sum(links_destab_changed[1, mask_false]) / rep,
+        std(links_destab_changed[1, 1:rep]),
+        sum(links_destab_changed[2, mask_false]) / rep,
+        std(links_destab_changed[2, 1:rep]),
+        sum(links_destab_changed[3, mask_false]) / rep,
+        std(links_destab_changed[3, 1:rep]),
+        sum(links_destab_changed[4, mask_false]) / rep,
+        std(links_destab_changed[4, 1:rep]),
+        sum(initial_neg_links_count) / rep,
+        std(initial_neg_links_count[1:rep]),
+        sum(Deltas[1, mask_false]) / rep,
+        std(Deltas[1, 1:rep]),
+        sum(Deltas[2, mask_false]) / rep,
+        std(Deltas[2, 1:rep]),
+        sum(Deltas[3, mask_false]) / rep,
+        std(Deltas[3, 1:rep]),
+        sum(Deltas[4, mask_false]) / rep,
+        std(Deltas[4, 1:rep]),
+    ]
     # "zmax", "HB", "HB1", "HB2", "HB12", "sim", "sim_std", "stab",
     # "times", "times_std"]
 end

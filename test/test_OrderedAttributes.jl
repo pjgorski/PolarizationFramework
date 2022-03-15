@@ -12,9 +12,9 @@ attr = get_attributes(b, nodes)
 @test max(attr...) == v #test wartosci powinny byc +-1
 
 attr = ones(Int, nodes, g)
-attr[1,:] = 3
-attr[2,1:2] = 3
-attr[2,3:5] = 2
+attr[1, :] = 3
+attr[2, 1:2] = 3
+attr[2, 3:5] = 2
 #attr is:
 # [3  3  3  3  3
 #  3  3  2  2  2
@@ -23,10 +23,10 @@ attr[2,3:5] = 2
 # [0.0  0.5  -0.9
 #  0.0  0.0  -0.3
 #  0.0  0.0   0.0]
-exp_weights = zeros(3,3)
-exp_weights[1,2] = 0.5;
-exp_weights[1,3] = -0.9;
-exp_weights[2,3] = -0.3;
+exp_weights = zeros(3, 3)
+exp_weights[1, 2] = 0.5;
+exp_weights[1, 3] = -0.9;
+exp_weights[2, 3] = -0.3;
 
 weights = get_attribute_layer_weights(b, attr)
 

@@ -5,16 +5,16 @@ quickactivate(@__DIR__)
 
 using PolarizationFramework
 
-ns = [3,5,7,9,11,13,15]#[9,15,25]
+ns = [3, 5, 7, 9, 11, 13, 15]#[9,15,25]
 # ns = [11,13,15]
 #for test simulations number of repetition is decreased. 
-reps = Int.([10000,1000,1000,1000,500,500,500] / 10) 
+reps = Int.([10000, 1000, 1000, 1000, 500, 500, 500] / 10)
 # reps = [500, 500, 500]
 reps_dict = Dict(zip(ns, reps))
 gs = [5, 11]
 
 threshold = 0.5;
-vs = [4, @onlyif("attr_types" == "OA",  1000)] #includes CA
+vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
 attr_types = ["BA", "UA", "OA", "UPA"]
 
@@ -26,14 +26,13 @@ dicts = dict_list(all_params)
 # [d["gammas"] = gammas for d in dicts] #adding gammas
 
 for params in dicts
-
     n, g, attr_type, v, rep = let
         @unpack ns, threshold, reps, gs, attr_types, vs = params
         ns, gs, attr_types, vs, reps
     end
 
     println("Started n=$n and g=$g and attr_type=", attr_type, " and v=$v.")
-    
+
     if attr_type == "UA"
         attr = UnorderedAttributes(g, threshold, v)
     elseif attr_type == "BA"
@@ -45,7 +44,17 @@ for params in dicts
     else
         throw(attr_type)
     end
-    r = using_curheider_attr(n, attr, gammas, rep, 3000., "Heider7!";
-        disp_each = 0, disp_more_every = 600, save_each = 600, files_folder = ["data", "sims"], 
-        filename_prefix = "NumerFig4")
+    r = using_curheider_attr(
+        n,
+        attr,
+        gammas,
+        rep,
+        3000.0,
+        "Heider7!";
+        disp_each = 0,
+        disp_more_every = 600,
+        save_each = 600,
+        files_folder = ["data", "sims"],
+        filename_prefix = "NumerFig4",
+    )
 end

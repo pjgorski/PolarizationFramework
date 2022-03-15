@@ -26,16 +26,24 @@ using Dates
 # 
 # Returns the tuple of: 
 # ishb_sim_par - array of Boolean values [is it balanced state, is AL in balanced state,
-        # similarity between RL and AL, balanced ratio of RL, is it paradise state,
-        # is it hell state, counts od different triads (Deltas: Delta0, Delta1, Delta2, Delta3), 
-        # is it weakly balanced state, local polarization measure, is the system globally polarized],
+# similarity between RL and AL, balanced ratio of RL, is it paradise state,
+# is it hell state, counts od different triads (Deltas: Delta0, Delta1, Delta2, Delta3), 
+# is it weakly balanced state, local polarization measure, is the system globally polarized],
 # time of simulation to reach stable solution (or maxtime if not reached),
 # values of RL weights at the end of simulation, 
 # initial conditions of RL, 
 # initial conditions of AL, 
 # whole sol (if transition values are not saved, see show_plot, then they are not here).
-function calc_curheider_attr(n::Int, attr::AbstractAttributes, gamma::Float64, maxtime::Float64, ode_fun::Function, solver,
-        show_plot::Bool, input...)
+function calc_curheider_attr(
+    n::Int,
+    attr::AbstractAttributes,
+    gamma::Float64,
+    maxtime::Float64,
+    ode_fun::Function,
+    solver,
+    show_plot::Bool,
+    input...,
+)
     #initial conditions
     need_init_u0 = true
     need_init_xy = true
@@ -53,52 +61,72 @@ function calc_curheider_attr(n::Int, attr::AbstractAttributes, gamma::Float64, m
     end
 
     if need_init_u0
-        u0 = triu((rand(n,n)*2).-1,1)
+        u0 = triu((rand(n, n) * 2) .- 1, 1)
     end
     if need_init_xy
-        val0_attr = get_attributes(attr, n);
-        xy_attr = get_attribute_layer_weights(attr, val0_attr);
+        val0_attr = get_attributes(attr, n)
+        xy_attr = get_attribute_layer_weights(attr, val0_attr)
     end
 
     # help variable
-    mask = triu(trues(size(u0)),1)
+    mask = triu(trues(size(u0)), 1)
 
     condition_here(u, t, integrator) = condition2(u, t, integrator, mask)
     affect!(integrator) = terminate!(integrator)
-    cb = DiscreteCallback(condition_here,affect!)
+    cb = DiscreteCallback(condition_here, affect!)
 
     #ode and model parameters
-    tspan = (0.0,maxtime)
+    tspan = (0.0, maxtime)
 
-    lay1mul = zeros(n,n);
-    x_sim = zeros(n,n);
+    lay1mul = zeros(n, n)
+    x_sim = zeros(n, n)
 
-    p = (n, gamma.*xy_attr, lay1mul, x_sim, mask)
+    p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
 
     #solving
-    prob = ODEProblem(ode_fun,u0,tspan,p)
-    sol = solve(prob,solver,reltol=1e-6,abstol=1e-12, callback=cb,
-        isoutofdomain = (u,p,t)->any(x->abs.(x)>=1,u), save_everystep=show_plot)
+    prob = ODEProblem(ode_fun, u0, tspan, p)
+    sol = solve(
+        prob,
+        solver,
+        reltol = 1e-6,
+        abstol = 1e-12,
+        callback = cb,
+        isoutofdomain = (u, p, t) -> any(x -> abs.(x) >= 1, u),
+        save_everystep = show_plot,
+    )
 
     #estimating output
     paradise = is_paradise(sol.u[end], n)
     Deltas = get_triad_counts(sol.u[end], n)
-    weak_balance_in_complete_graph = Deltas[1 + 1] == 0
+    weak_balance_in_complete_graph = Deltas[1+1] == 0
     local_polarization = get_local_polarization(Deltas)
     global_polarization = weak_balance_in_complete_graph && (!paradise)
-    ishb_sim_par = [is_hb(sol.u[end], n), is_hb(xy_attr, n),
+    ishb_sim_par = [
+        is_hb(sol.u[end], n),
+        is_hb(xy_attr, n),
         get_similarity(sol.u[end], xy_attr, n),
         get_balanced_ratio(sol.u[end], n),
         paradise,
         is_hell(sol.u[end], n),
-        Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization]
+        Deltas,
+        weak_balance_in_complete_graph,
+        local_polarization,
+        global_polarization,
+    ]
 
     if show_plot
 
-        h = plot(sol,linewidth=5,title="Solution to the linear ODE with a thick line",
-             xaxis="Time (t)",yaxis="weights(t)", ylim=[-1,+1],
-             vars = reshape(1:n^2,n,n)[mask]); legend=false
-        display(h);
+        h = plot(
+            sol,
+            linewidth = 5,
+            title = "Solution to the linear ODE with a thick line",
+            xaxis = "Time (t)",
+            yaxis = "weights(t)",
+            ylim = [-1, +1],
+            vars = reshape(1:n^2, n, n)[mask],
+        )
+        legend = false
+        display(h)
         #gui()
     end
 
@@ -112,17 +140,24 @@ export calc_curheider_attr
 #   object of `Result` DataType,
 #   `filename`
 #   filename without extension
-function initialize_file(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, maxtime::Float64, ode_fun_name::String,
-    files_folder::Vector{String}, filename_prefix::String)
+function initialize_file(
+    n::Int,
+    attr::AbstractAttributes,
+    gammas::Vector{Float64},
+    maxtime::Float64,
+    ode_fun_name::String,
+    files_folder::Vector{String},
+    filename_prefix::String,
+)
 
     r = Result(n, attr, gammas, maxtime, ode_fun_name)
 
-    prefix = filename_prefix*Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
-    file_params = savename(prefix, r, "mat", sort=false)
-    file_params = replace(file_params, "attr_degeneracy"=>"v")
+    prefix = filename_prefix * Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
+    file_params = savename(prefix, r, "mat", sort = false)
+    file_params = replace(file_params, "attr_degeneracy" => "v")
 
     filename = projectdir(files_folder..., file_params)
-    save_result(r, filename); #''allocating'' place
+    save_result(r, filename) #''allocating'' place
     return r, filename
 end
 
@@ -153,34 +188,53 @@ end
 # (heider function with parameters) finishes.
 #  
 # Returns `Result` object. 
-function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, zmax::Int, maxtime::Float64, ode_fun_name::String;
-    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::Vector{String} = ["data",], filename_prefix::String = "")
+function using_curheider_attr(
+    n::Int,
+    attr::AbstractAttributes,
+    gammas::Vector{Float64},
+    zmax::Int,
+    maxtime::Float64,
+    ode_fun_name::String;
+    disp_each = 0.5,
+    disp_more_every = 600,
+    save_each = 600,
+    files_folder::Vector{String} = ["data"],
+    filename_prefix::String = "",
+)
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
-    r, filename = initialize_file(n, attr, gammas, maxtime, ode_fun_name, files_folder, filename_prefix)
+    r, filename = initialize_file(
+        n,
+        attr,
+        gammas,
+        maxtime,
+        ode_fun_name,
+        files_folder,
+        filename_prefix,
+    )
 
     # time preparation
     if disp_more_every != 0
-        time_disp = time();
+        time_disp = time()
     end
 
     if save_each != 0
-        time_save = time();
+        time_save = time()
     end
 
-    firstline = 1;
-    realization_counter = 0;
-    for i in 1:length(gammas)
-        gamma1 = gammas[i];
+    firstline = 1
+    realization_counter = 0
+    for i = 1:length(gammas)
+        gamma1 = gammas[i]
 
         #zeroing data arrays
-        HB = zeros(zmax);
-        HB_x = zeros(zmax);
-        BR = zeros(zmax); #ratio of balanced triads
-        HB_attr = zeros(zmax);
-        HB_only_weights = zeros(zmax);
+        HB = zeros(zmax)
+        HB_x = zeros(zmax)
+        BR = zeros(zmax) #ratio of balanced triads
+        HB_attr = zeros(zmax)
+        HB_only_weights = zeros(zmax)
         paradise = zeros(zmax)
         hell = zeros(zmax)
         Deltas = zeros(4, zmax)
@@ -190,36 +244,43 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
         initial_neg_links_count = zeros(zmax)
         links_destab_changed = zeros(4, zmax)
 
-        sim = zeros(zmax);
-        x_attr_sim = zeros(zmax);
-        stab = zeros(zmax);
-        times = zeros(zmax);
-        for rep in 1:zmax
+        sim = zeros(zmax)
+        x_attr_sim = zeros(zmax)
+        stab = zeros(zmax)
+        times = zeros(zmax)
+        for rep = 1:zmax
             #simulation
             (ishb_sim_par, t, u, u0, xy_attr, sol) =
                 calc_curheider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false)
             realization_counter += 1
 
             #work on results
-            HB_x[rep], HB_attr[rep], x_attr_sim[rep], BR[rep],
-                paradise[rep], hell[rep], Deltas[:, rep],
-                weak_balance_in_complete_graph[rep], local_polarization[rep], global_polarization[rep] = ishb_sim_par
+            HB_x[rep],
+            HB_attr[rep],
+            x_attr_sim[rep],
+            BR[rep],
+            paradise[rep],
+            hell[rep],
+            Deltas[:, rep],
+            weak_balance_in_complete_graph[rep],
+            local_polarization[rep],
+            global_polarization[rep] = ishb_sim_par
 
             initial_neg_links_count[rep] = sum(u0 .< 0)
-            links_destab_changed[3, rep] = sum(u[u0.>0].<0) #number of initial pos links that changed to negative
-            links_destab_changed[4, rep] = sum(u[u0.<0].>0) #number of initial neg links that changed to positive
+            links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
+            links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
 
             if t < maxtime #we have stability
                 HB[rep] = ishb_sim_par[1]
                 stab[rep] = 1
             end
 
-            times[rep] = t;
+            times[rep] = t
 
             #checking time/repetitions and eventually informing about progress and saving
             if disp_more_every != 0
                 if disp_more_every < time() - time_disp
-                    time_disp = time();
+                    time_disp = time()
                     # displaying
                     g = attr.g
                     v = r.attr_degeneracy
@@ -231,21 +292,38 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
 
             if save_each != 0
                 if save_each < time() - time_save
-                    time_save = time();
+                    time_save = time()
                     # partial saving
-                    fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
-                        paradise, hell, initial_neg_links_count,
-                        links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
-                        stab, times, i, rep, firstline);
-                    update_result!(r, fields);
-                    save_result(r, filename);
-                    save_result(r, filename, ext = "jld2");
+                    fields = (
+                        HB,
+                        HB_x,
+                        HB_attr,
+                        sim,
+                        x_attr_sim,
+                        BR,
+                        paradise,
+                        hell,
+                        initial_neg_links_count,
+                        links_destab_changed,
+                        Deltas,
+                        weak_balance_in_complete_graph,
+                        local_polarization,
+                        global_polarization,
+                        stab,
+                        times,
+                        i,
+                        rep,
+                        firstline,
+                    )
+                    update_result!(r, fields)
+                    save_result(r, filename)
+                    save_result(r, filename, ext = "jld2")
                 end
             end
 
             if disp_each != 0
                 if disp_each <= realization_counter / zmax
-                    realization_counter = 0;
+                    realization_counter = 0
                     # displaying
                     g = attr.g
                     v = r.attr_degeneracy
@@ -255,18 +333,35 @@ function using_curheider_attr(n::Int, attr::AbstractAttributes, gammas::Vector{F
                 end
             end
         end
-        fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
-            paradise, hell, initial_neg_links_count,
-            links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
-            stab, times, i, zmax, firstline);
-        update_result!(r, fields);
-        firstline+=2;
+        fields = (
+            HB,
+            HB_x,
+            HB_attr,
+            sim,
+            x_attr_sim,
+            BR,
+            paradise,
+            hell,
+            initial_neg_links_count,
+            links_destab_changed,
+            Deltas,
+            weak_balance_in_complete_graph,
+            local_polarization,
+            global_polarization,
+            stab,
+            times,
+            i,
+            zmax,
+            firstline,
+        )
+        update_result!(r, fields)
+        firstline += 2
     end
 
-    save_result(r, filename);
-    save_result(r, filename, ext = "jld2");
+    save_result(r, filename)
+    save_result(r, filename, ext = "jld2")
 
-    return r;
+    return r
 end
 export using_curheider_attr
 
@@ -298,36 +393,55 @@ export using_curheider_attr
 # (heider function with parameters) finishes.
 #  
 # Returns `Result` object. 
-function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::Vector{Float64}, larger_size::Int, zmax::Int,
-    maxtime::Float64, ode_fun_name::String;
-    disp_each = 0.5, disp_more_every = 600, save_each = 600, files_folder::Vector{String} = ["data",], filename_prefix::String = "")
+function using_curheider_attr_destab(
+    n::Int,
+    attr::AbstractAttributes,
+    gammas::Vector{Float64},
+    larger_size::Int,
+    zmax::Int,
+    maxtime::Float64,
+    ode_fun_name::String;
+    disp_each = 0.5,
+    disp_more_every = 600,
+    save_each = 600,
+    files_folder::Vector{String} = ["data"],
+    filename_prefix::String = "",
+)
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
     rl_weights = init_random_balanced_relations(n, larger_size)
 
-    r, filename = initialize_file(n, attr, gammas, maxtime, ode_fun_name, files_folder, filename_prefix)
+    r, filename = initialize_file(
+        n,
+        attr,
+        gammas,
+        maxtime,
+        ode_fun_name,
+        files_folder,
+        filename_prefix,
+    )
 
     # time prepariation
     if disp_more_every != 0
-        time_disp = time();
+        time_disp = time()
     end
 
     if save_each != 0
-        time_save = time();
+        time_save = time()
     end
 
-    firstline = 1;
-    realization_counter = 0;
-    for i in 1:length(gammas)
-        gamma1 = gammas[i];
+    firstline = 1
+    realization_counter = 0
+    for i = 1:length(gammas)
+        gamma1 = gammas[i]
 
         #zeroing data arrays
-        HB = zeros(zmax);
-        HB_x = zeros(zmax);
-        BR = zeros(zmax); #ratio of balanced triads
-        HB_attr = zeros(zmax);
+        HB = zeros(zmax)
+        HB_x = zeros(zmax)
+        BR = zeros(zmax) #ratio of balanced triads
+        HB_attr = zeros(zmax)
         # HB_only_weights = zeros(zmax);
         paradise = zeros(zmax)
         hell = zeros(zmax)
@@ -335,67 +449,83 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
         weak_balance_in_complete_graph = zeros(zmax)
         local_polarization = zeros(zmax)
         global_polarization = zeros(zmax)
-        initial_neg_links_count = ones(zmax)*larger_size*(n-larger_size)
+        initial_neg_links_count = ones(zmax) * larger_size * (n - larger_size)
         links_destab_changed = zeros(4, zmax)
 
-        sim = zeros(zmax);
-        x_attr_sim = zeros(zmax);
-        stab = zeros(zmax);
-        times = zeros(zmax);
+        sim = zeros(zmax)
+        x_attr_sim = zeros(zmax)
+        stab = zeros(zmax)
+        times = zeros(zmax)
 
-        for rep in 1:zmax
-            val0_attr = get_attributes(attr, n);
-            al_weights = get_attribute_layer_weights(attr, val0_attr);
+        for rep = 1:zmax
+            val0_attr = get_attributes(attr, n)
+            al_weights = get_attribute_layer_weights(attr, val0_attr)
 
-            (pos_destab, neg_destab) = get_destabilized_links_count(rl_weights, al_weights, gamma1)
-            links_destab_changed[1,:] .= pos_destab
-            links_destab_changed[2,:] .= neg_destab
+            (pos_destab, neg_destab) =
+                get_destabilized_links_count(rl_weights, al_weights, gamma1)
+            links_destab_changed[1, :] .= pos_destab
+            links_destab_changed[2, :] .= neg_destab
             if pos_destab + neg_destab == 0 #no destabilization => no sense of further calculations
                 HB[rep] = 1
                 HB_x[rep] = 1
                 BR[rep] = 1
-                HB_attr[rep] = is_hb(al_weights,n)
+                HB_attr[rep] = is_hb(al_weights, n)
                 # HB_only_weights = zeros(zmax);
                 paradise[rep] = is_paradise(rl_weights, n)
                 hell[rep] = 0
                 Deltas[:, rep] = get_triad_counts(rl_weights, n)
                 local_polarization[rep] = get_local_polarization(Deltas[:, rep])
-                global_polarization[rep] = 1-paradise[rep]
+                global_polarization[rep] = 1 - paradise[rep]
                 weak_balance_in_complete_graph[rep] = 1
 
-                x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n);
-                stab[rep] = 1;
+                x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n)
+                stab[rep] = 1
                 times[rep] = 0
 
                 links_destab_changed[3, rep] = 0
                 links_destab_changed[4, rep] = 0
             else
                 #simulation
-                (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                    calc_curheider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false,
-                        rl_weights, al_weights)
+                (ishb_sim_par, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+                    n,
+                    attr,
+                    gamma1,
+                    maxtime,
+                    ode_fun,
+                    solver,
+                    false,
+                    rl_weights,
+                    al_weights,
+                )
 
                 #work on results
-                HB_x[rep], HB_attr[rep], x_attr_sim[rep], BR[rep],
-                    paradise[rep], hell[rep], Deltas[:, rep],
-                    weak_balance_in_complete_graph[rep], local_polarization[rep], global_polarization[rep] = ishb_sim_par
+                HB_x[rep],
+                HB_attr[rep],
+                x_attr_sim[rep],
+                BR[rep],
+                paradise[rep],
+                hell[rep],
+                Deltas[:, rep],
+                weak_balance_in_complete_graph[rep],
+                local_polarization[rep],
+                global_polarization[rep] = ishb_sim_par
 
-                links_destab_changed[3, rep] = sum(u[u0.>0].<0) #number of initial pos links that changed to negative
-                links_destab_changed[4, rep] = sum(u[u0.<0].>0) #number of initial neg links that changed to positive
+                links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
+                links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
 
                 if t < maxtime #we have stability
                     HB[rep] = ishb_sim_par[1]
                     stab[rep] = 1
                 end
 
-                times[rep] = t;
+                times[rep] = t
             end
             realization_counter += 1
 
             #checking time/repetitions and eventually informing about progress and saving
             if disp_more_every != 0
                 if disp_more_every < time() - time_disp
-                    time_disp = time();
+                    time_disp = time()
                     # displaying
                     # display_res(gamma1, rep)
                     g = attr.g
@@ -408,21 +538,38 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
 
             if save_each != 0
                 if save_each < time() - time_save
-                    time_save = time();
+                    time_save = time()
                     # partial saving
-                    fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
-                        paradise, hell, initial_neg_links_count,
-                        links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
-                        stab, times, i, rep, firstline);
-                    update_result!(r, fields);
-                    save_result(r, filename);
-                    save_result(r, filename, ext = "jld2");
+                    fields = (
+                        HB,
+                        HB_x,
+                        HB_attr,
+                        sim,
+                        x_attr_sim,
+                        BR,
+                        paradise,
+                        hell,
+                        initial_neg_links_count,
+                        links_destab_changed,
+                        Deltas,
+                        weak_balance_in_complete_graph,
+                        local_polarization,
+                        global_polarization,
+                        stab,
+                        times,
+                        i,
+                        rep,
+                        firstline,
+                    )
+                    update_result!(r, fields)
+                    save_result(r, filename)
+                    save_result(r, filename, ext = "jld2")
                 end
             end
 
             if disp_each != 0
                 if disp_each <= realization_counter / zmax
-                    realization_counter = 0;
+                    realization_counter = 0
                     # displaying
                     g = attr.g
                     v = r.attr_degeneracy
@@ -432,18 +579,35 @@ function using_curheider_attr_destab(n::Int, attr::AbstractAttributes, gammas::V
                 end
             end
         end
-        fields = (HB, HB_x, HB_attr, sim, x_attr_sim, BR,
-            paradise, hell, initial_neg_links_count,
-            links_destab_changed, Deltas, weak_balance_in_complete_graph, local_polarization, global_polarization,
-            stab, times, i, zmax, firstline);
-        update_result!(r, fields);
-        firstline+=2;
+        fields = (
+            HB,
+            HB_x,
+            HB_attr,
+            sim,
+            x_attr_sim,
+            BR,
+            paradise,
+            hell,
+            initial_neg_links_count,
+            links_destab_changed,
+            Deltas,
+            weak_balance_in_complete_graph,
+            local_polarization,
+            global_polarization,
+            stab,
+            times,
+            i,
+            zmax,
+            firstline,
+        )
+        update_result!(r, fields)
+        firstline += 2
     end
 
-    save_result(r, filename);
-    save_result(r, filename, ext = "jld2");
+    save_result(r, filename)
+    save_result(r, filename, ext = "jld2")
 
-    return r;
+    return r
 end
 export using_curheider_attr_destab
 

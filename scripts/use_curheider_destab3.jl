@@ -5,13 +5,13 @@ quickactivate(@__DIR__)
 
 using PolarizationFramework
 
-ns = [5,9]#[9,15,25]
-reps = [10,10]
+ns = [5, 9]#[9,15,25]
+reps = [10, 10]
 reps_dict = Dict(zip(ns, reps))
-gs = [1:2:21..., 25,29,33,37,41,45,49,55,61,67,73,81,89,97]
+gs = [1:2:21..., 25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 
 threshold = 0.5;
-vs = [4, @onlyif("attr_types" == "OA",  1000)] #includes CA
+vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
 attr_types = ["BA", "UA", "OA", "UPA"]
 
@@ -23,7 +23,7 @@ gammas = [0.5, 1.5, 2, 2.5, 3, 3.5, 4, 6]
 # gammas = [0.5]
 # gammas = [6]
 
-larger_sizes = [@onlyif(i <="ns" < 2*i,  i) for i in 1:maximum(ns)]
+larger_sizes = [@onlyif(i <= "ns" < 2 * i, i) for i = 1:maximum(ns)]
 
 all_params = @strdict(ns, gs, threshold, vs, attr_types, larger_sizes)
 dicts = dict_list(all_params)
@@ -31,7 +31,6 @@ dicts = dict_list(all_params)
 # [d["gammas"] = gammas for d in dicts] #adding gammas
 
 for params in dicts
-
     n, g, attr_type, v, rep, larger_size = let
         @unpack ns, threshold, reps, gs, attr_types, vs, larger_sizes = params
         ns, gs, attr_types, vs, reps, larger_sizes
@@ -50,9 +49,19 @@ for params in dicts
         throw(attr_type)
     end
 
-    r = using_curheider_attr_destab(n, attr, gammas, larger_size,
-        rep, 3000., "Heider7!",
-        disp_each = 0, disp_more_every = 600, save_each = 600, files_folder = ["data", "sims"], 
-        filename_prefix = "DestabFig1")
+    r = using_curheider_attr_destab(
+        n,
+        attr,
+        gammas,
+        larger_size,
+        rep,
+        3000.0,
+        "Heider7!",
+        disp_each = 0,
+        disp_more_every = 600,
+        save_each = 600,
+        files_folder = ["data", "sims"],
+        filename_prefix = "DestabFig1",
+    )
 
 end

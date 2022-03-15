@@ -8,10 +8,10 @@ using CSV
 
 # get data 
 res = DrWatson.collect_results(
-        datadir("sims"),
-        rinclude=[r"NumerFig1[.]*"]
-        #   black_list = bl,
-    )
+    datadir("sims"),
+    rinclude = [r"NumerFig1[.]*"],
+    #   black_list = bl,
+)
 first(res, 10)
 
 # plotting
@@ -31,7 +31,7 @@ for dict in dicts
         inds .*= res[!, string(param[1])] .== param[2]
     end
 
-    plot!(p, res.G[inds], res.LP[inds], lab = "gamma="*string(dict["gamma"]))
+    plot!(p, res.G[inds], res.LP[inds], lab = "gamma=" * string(dict["gamma"]))
 end
 
 plot(p, xlabel = "G", ylabel = "P_{LP}", legend = :bottomright)
