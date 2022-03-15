@@ -43,7 +43,7 @@ for params in dicts
     else
         throw(attr_type)
     end
-    r = using_curheider_attr(
+    r = using_heider_attr(
         n,
         attr,
         gammas,

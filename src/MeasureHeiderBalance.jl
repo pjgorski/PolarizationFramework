@@ -34,7 +34,7 @@ using Dates
 # initial conditions of RL, 
 # initial conditions of AL, 
 # whole sol (if transition values are not saved, see show_plot, then they are not here).
-function calc_curheider_attr(
+function calc_heider_attr(
     n::Int,
     attr::AbstractAttributes,
     gamma::Float64,
@@ -132,10 +132,10 @@ function calc_curheider_attr(
 
     return (ishb_sim_par, sol.t[end], sol.u[end], u0, xy_attr, sol)
 end
-export calc_curheider_attr
+export calc_heider_attr
 
 # Function creating results file. It parses parameters creating a unique file name and saves initially this file. 
-# For parameters description see `using_curheider_attr`. 
+# For parameters description see `using_heider_attr`. 
 # Returns a Tuple with:
 #   object of `Result` DataType,
 #   `filename`
@@ -161,7 +161,7 @@ function initialize_file(
     return r, filename
 end
 
-# Function using `calc_curheider_attr` function to simulate a number of repetitions
+# Function using `calc_heider_attr` function to simulate a number of repetitions
 # of solving the system having given parameters and random initial conditions:
 # Thus, this simulates the influence of attributes on preventing from forming 
 # a polarized state. 
@@ -188,7 +188,7 @@ end
 # (heider function with parameters) finishes.
 #  
 # Returns `Result` object. 
-function using_curheider_attr(
+function using_heider_attr(
     n::Int,
     attr::AbstractAttributes,
     gammas::Vector{Float64},
@@ -251,7 +251,7 @@ function using_curheider_attr(
         for rep = 1:zmax
             #simulation
             (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                calc_curheider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false)
+                calc_heider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false)
             realization_counter += 1
 
             #work on results
@@ -363,9 +363,9 @@ function using_curheider_attr(
 
     return r
 end
-export using_curheider_attr
+export using_heider_attr
 
-# Function using `calc_curheider_attr` function to simulate a number of repetitions
+# Function using `calc_heider_attr` function to simulate a number of repetitions
 # of solving the system having given parameters and almost a balanced RL.
 # Agents are divided into two groups and form positive links (+0.99) inside those groups
 # and negative (-0.99) to agents outside their group. 
@@ -393,7 +393,7 @@ export using_curheider_attr
 # (heider function with parameters) finishes.
 #  
 # Returns `Result` object. 
-function using_curheider_attr_destab(
+function using_heider_attr_destab(
     n::Int,
     attr::AbstractAttributes,
     gammas::Vector{Float64},
@@ -486,7 +486,7 @@ function using_curheider_attr_destab(
                 links_destab_changed[4, rep] = 0
             else
                 #simulation
-                (ishb_sim_par, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+                (ishb_sim_par, t, u, u0, xy_attr, sol) = calc_heider_attr(
                     n,
                     attr,
                     gamma1,
@@ -609,6 +609,6 @@ function using_curheider_attr_destab(
 
     return r
 end
-export using_curheider_attr_destab
+export using_heider_attr_destab
 
 # end

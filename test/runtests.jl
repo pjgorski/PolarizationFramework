@@ -109,7 +109,7 @@ end
 @testset "Simple simulation run" begin
     g = 5
     attr = BinaryAttributes(g)
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         45,
         attr,
         0.0,
@@ -131,7 +131,7 @@ end
     val0_attr = get_attributes(attr, n)
     al_w = get_attribute_layer_weights(attr, val0_attr)
 
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         n,
         attr,
         0.0,
@@ -140,7 +140,7 @@ end
         AutoTsit5(Rodas5(autodiff = false)),
         false,
     )
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         n,
         attr,
         gamma,
@@ -149,7 +149,7 @@ end
         AutoTsit5(Rodas5(autodiff = false)),
         false,
     )
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         n,
         attr,
         gamma,
@@ -159,7 +159,7 @@ end
         false,
         rl_bal,
     )
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         n,
         attr,
         gamma,
@@ -170,7 +170,7 @@ end
         (),
         al_w,
     )
-    (ishb_sim, t, u, u0, xy_attr, sol) = calc_curheider_attr(
+    (ishb_sim, t, u, u0, xy_attr, sol) = calc_heider_attr(
         n,
         attr,
         gamma,
@@ -197,7 +197,7 @@ end
     files_folder = ["test"]
     filename_prefix = "SoSNumerTest"
 
-    using_curheider_attr(
+    using_heider_attr(
         n,
         attr,
         gammas,
@@ -214,7 +214,7 @@ end
     filename_prefix = "SoSDestabTest"
     larger_size = 3
 
-    using_curheider_attr_destab(
+    using_heider_attr_destab(
         n,
         attr,
         gammas,
@@ -244,7 +244,7 @@ end
     files_folder = ["test"]
     filename_prefix = "LSoSNumerTest"
 
-    using_curheider_attr(
+    using_heider_attr(
         n,
         attr,
         gammas,
@@ -262,7 +262,7 @@ end
     larger_size = Int((n + 1) / 2 + 2)
     zmax = 300
 
-    using_curheider_attr_destab(
+    using_heider_attr_destab(
         n,
         attr,
         gammas,

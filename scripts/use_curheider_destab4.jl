@@ -44,7 +44,7 @@ for params in dicts
     end
 
 
-    r = using_curheider_attr_destab(
+    r = using_heider_attr_destab(
         n,
         attr,
         gammas,

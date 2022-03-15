@@ -8,7 +8,7 @@ using DifferentialEquations
 g = 5
 attr = BinaryAttributes(g)
 
-calc_curheider_attr(
+calc_heider_attr(
     45,
     0.0,
     1000.0,
