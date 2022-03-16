@@ -35,7 +35,7 @@ Therefore, after cloning the project, open `julia` terminal in the project folde
 ```julia
 using DrWatson
 quickactivate(@__DIR__, "PolarizationFramework")
-using covid
+using PolarizationFramework
 ```
 (To do the above you might need to `] add DrWatson` first.)
 And you can start using the package. See examples in scripts folder or see instructions below. 
@@ -72,10 +72,14 @@ gs = [1:2:21..., 25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 
 threshold = 0.5
 
-# Number of categories considered. For BinaryAttributes it does not matter. When OrderedAttributes are chosen, then 1000 categories gives a continuous attribute. 
+# Number of categories considered. For BinaryAttributes it does not matter. 
+# When OrderedAttributes are chosen, then 1000 categories gives a continuous attribute. 
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
-# Abbreviations of considered attributes. Mind that definition of `vs` above will allow to consider 5 cases: BinaryAttributes, OrderedAttributes, UnorderedAttributes, UnorderedPositiveAttributes and (approx.) continuous attributes. 
+# Abbreviations of considered attributes. 
+# Mind that definition of `vs` above will allow to consider 5 cases: 
+# BinaryAttributes, OrderedAttributes, UnorderedAttributes, 
+# UnorderedPositiveAttributes and (approx.) continuous attributes. 
 attr_types = ["BA", "UA", "OA", "UPA"]
 
 # Considered coupling strengths. 
