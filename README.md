@@ -1,38 +1,15 @@
 # PolarizationFramework
 
-This code base is using the Julia Language and [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
-to make a reproducible scientific project named
-> PolarizationFramework
-
-It is authored by Piotr J Górski.
-
-To (locally) reproduce this project, do the following:
-
-0. Download this code base. Notice that raw data are typically not included in the
-   git-history and may need to be downloaded independently.
-1. Open a Julia console and do:
-   ```
-   julia> using Pkg
-   julia> Pkg.add("DrWatson") # install globally, for using `quickactivate`
-   julia> Pkg.activate("path/to/this/project")
-   julia> Pkg.instantiate()
-   ```
-
-This will install all necessary packages for you to be able to run the scripts and
-everything should work out of the box, including correctly finding local paths.
-
 ## Table of contents
 
 - [About the project](#about-the-project)
 - [Built with](#built-with)
 - [Getting started](#getting-started)
   * [Installation](#installation)
-- [Basic examples](#basic-examples)
-  * [Running a single model realization.](#running-a-single-model-realization)
-  * [Repeating simulation `X` times.](#repeating-simulation--x--times)
-  * [Example of a series of simulation](#example-of-a-series-of-simulation)
-- [Choosing initial network structure](#choosing-initial-network-structure)
-
+- [Example](#example)
+  * [The influence of growing number of attributes on the preventing polarization from forming](#the-influence-of-growing-number-of-attributes-on-the-preventing-polarization-from-forming)
+  * [Result analysis](#result-analysis)
+- [Attributes](#attributes)
 # About the project
 Framework containing agent-based models for the analysis of attribute influence on polarization observed in the system. 
 
@@ -230,7 +207,7 @@ Currently following attributes are implemented:
 
 To create another type of attribute (`OwnAttributes`), one has to:
 * create a `struct` that inherits after `AbstractAttributes` and contains at least field `g` with number of attributes. 
-```
+```julia
 struct OwnAttributes <: AbstractAttributes
     g
 end
