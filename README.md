@@ -86,7 +86,7 @@ attr_types = ["BA", "UA", "OA", "UPA"]
 gammas = [0.5, 1.5, 4]
 ```
 
-Creating sets parameters to be simulated:
+Creating sets of parameters to be simulated:
 ```julia
 all_params = @strdict(ns, gs, threshold, vs, attr_types)
 dicts = dict_list(all_params)
@@ -164,7 +164,7 @@ first(res[!, ["N", "G", "attr_name", "gamma", "LP", "GP", "HB", ]], 10)
 
 <div class="data-frame"><p>10 rows × 7 columns</p><table class="data-frame"><thead><tr><th></th><th>N</th><th>G</th><th>attr_name</th><th>gamma</th><th>LP</th><th>GP</th><th>HB</th></tr><tr><th></th><th title="Union{Missing, UInt32}">UInt32?</th><th title="Union{Missing, UInt32}">UInt32?</th><th title="Union{Missing, String}">String?</th><th title="Union{Missing, Float64}">Float64?</th><th title="Union{Missing, Float64}">Float64?</th><th title="Union{Missing, Float64}">Float64?</th><th title="Union{Missing, Float64}">Float64?</th></tr></thead><tbody><tr><th>1</th><td>5</td><td>1</td><td>BinaryAttributes</td><td>0.5</td><td>0.78</td><td>0.94</td><td>1.0</td></tr><tr><th>2</th><td>5</td><td>1</td><td>BinaryAttributes</td><td>1.5</td><td>0.744</td><td>0.93</td><td>1.0</td></tr><tr><th>3</th><td>5</td><td>1</td><td>BinaryAttributes</td><td>4.0</td><td>0.744</td><td>0.92</td><td>1.0</td></tr><tr><th>4</th><td>9</td><td>1</td><td>BinaryAttributes</td><td>0.5</td><td>0.774167</td><td>1.0</td><td>1.0</td></tr><tr><th>5</th><td>9</td><td>1</td><td>BinaryAttributes</td><td>1.5</td><td>0.769167</td><td>1.0</td><td>1.0</td></tr><tr><th>6</th><td>9</td><td>1</td><td>BinaryAttributes</td><td>4.0</td><td>0.755833</td><td>1.0</td><td>1.0</td></tr><tr><th>7</th><td>5</td><td>3</td><td>BinaryAttributes</td><td>0.5</td><td>0.729</td><td>0.91</td><td>1.0</td></tr><tr><th>8</th><td>5</td><td>3</td><td>BinaryAttributes</td><td>1.5</td><td>0.744</td><td>0.8</td><td>0.82</td></tr><tr><th>9</th><td>5</td><td>3</td><td>BinaryAttributes</td><td>4.0</td><td>0.579</td><td>0.29</td><td>0.26</td></tr><tr><th>10</th><td>9</td><td>3</td><td>BinaryAttributes</td><td>0.5</td><td>0.748095</td><td>0.96</td><td>0.97</td></tr></tbody></table></div>
 
-In above column we see respectively number of Nodes `N`, number of attributes `G`, attribute name, coupling strength, local polarization `LP`, global polarization `GP` and probability of reaching structural balance state `HB`. All columns are described in [file](src/Results.jl). 
+In above table we see respectively number of Nodes `N`, number of attributes `G`, attribute name, coupling strength, local polarization `LP`, global polarization `GP` and probability of reaching structural balance state `HB`. All available columns are described in [file](src/Results.jl). 
 
 The results were collected. Now they have to be printed. In the case the same parameters were simulated multiple times, for instance to obtain better statistics, one would have to write a function that aggregates over these results. 
 
