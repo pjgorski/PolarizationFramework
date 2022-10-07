@@ -17,15 +17,15 @@ all_links = get_links_in_triads(all_triads)
 A = get_adj_necessary_links(size(A)[1], all_links; typ = Float64);
 
 # Heider9!
-link_indices = findall(triu(A,1)[:] .> 0) 
+link_indices = findall(triu(A, 1)[:] .> 0)
 triads_around_links_dict = get_triangles_around_links(all_triads)
 link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
 link_pairs_triad_cnt = [length(link) for link in link_pairs];
 
-reps = [10]
+reps = [100]
 reps_dict = Dict(zip(ns, reps))
 # two parts of simulations
-gs = [1:2:21...] 
+gs = [1:2:21...]
 # gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
@@ -73,10 +73,10 @@ for params in dicts
         save_each = 600,
         files_folder = ["data", "karate-sims"],
         filename_prefix = "NumKarG",
-        all_links_mat = A, 
-        all_triads = all_triads, 
-        link_indices = link_indices, 
-        link_pairs = link_pairs, 
-        link_pairs_triad_cnt = link_pairs_triad_cnt
+        all_links_mat = A,
+        all_triads = all_triads,
+        link_indices = link_indices,
+        link_pairs = link_pairs,
+        link_pairs_triad_cnt = link_pairs_triad_cnt,
     )
 end

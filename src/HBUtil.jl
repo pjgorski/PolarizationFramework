@@ -66,7 +66,7 @@ export Heider73!
 function Heider9!(dx, x, p, t)
     gamma_attr, lay1mul, link_pairs, triad_cnt = p
 
-    lay1mul .= map(y -> sum(map(z -> x[z[1]]*x[z[2]], y)), link_pairs)
+    lay1mul .= map(y -> sum(map(z -> x[z[1]] * x[z[2]], y)), link_pairs)
 
     dx .= (x .^ 2 .- 1) .* (lay1mul ./ triad_cnt .+ gamma_attr) .* (-1)
 end
@@ -146,8 +146,15 @@ export is_hb
 # Calculates whether there is HB when the signs are given in a form of a Vector `x`
 # `link_pairs` is a vector of triads that each link participates in. 
 # `triad_cnt` is a vector of numbers of triads each link participates in. 
-function is_hb(x::Array{Float64,1}, link_pairs::Vector, triad_cnt::Vector; lay1mul = zeros(length(x)))
-    lay1mul .= map(y -> sum(map(z -> sign(x[z[1]]*x[z[2]]), y)), link_pairs) .* sign.(x) ./ triad_cnt
+function is_hb(
+    x::Array{Float64,1},
+    link_pairs::Vector,
+    triad_cnt::Vector;
+    lay1mul = zeros(length(x)),
+)
+    lay1mul .=
+        map(y -> sum(map(z -> sign(x[z[1]] * x[z[2]]), y)), link_pairs) .* sign.(x) ./
+        triad_cnt
 
     return sum(lay1mul) == length(x)
 end
@@ -206,59 +213,76 @@ function get_balanced_ratio(x::Array{Float64,2}, n)
 end
 export get_balanced_ratio
 
-function get_balanced_ratio_efficient(xs::Matrix{Float64}, triads_count::Int; hlp=zeros(size(xs)))
+function get_balanced_ratio_efficient(
+    xs::Matrix{Float64},
+    triads_count::Int;
+    hlp = zeros(size(xs)),
+)
     mul!(hlp, xs, xs)
     hlp .*= xs
     BN = sum(hlp) / triads_count / 12 + 0.5
     return BN
-  end
-  export get_balanced_ratio_efficient
-  
-  # Calculates balanced ratio in the case of not complete network. 
-  # xs is a signed network where there are 0s where there are no links. 
-  # (If that's not the case, one should run `xs .*= adj_mat` beforehand.) 
-  # adj_mat is an adjacency matrix. 
-  function get_balanced_ratio_not_complete(xs::Matrix{Float64}, adj_mat::Matrix{Float64}; hlp=zeros(size(xs)))
+end
+export get_balanced_ratio_efficient
+
+# Calculates balanced ratio in the case of not complete network. 
+# xs is a signed network where there are 0s where there are no links. 
+# (If that's not the case, one should run `xs .*= adj_mat` beforehand.) 
+# adj_mat is an adjacency matrix. 
+function get_balanced_ratio_not_complete(
+    xs::Matrix{Float64},
+    adj_mat::Matrix{Float64};
+    hlp = zeros(size(xs)),
+)
     mul!(hlp, adj_mat, adj_mat)
     hlp .*= adj_mat
     maxval = sum(hlp) #doing the above on xs can return values from range [-maxval, maxval]
-  
+
     mul!(hlp, xs, xs)
     hlp .*= xs
-  
+
     #because of the mentioned above range, one need to transform the output
     BN = (sum(hlp) + maxval) / 2 / maxval
     return BN
-  end
-  export get_balanced_ratio_not_complete
+end
+export get_balanced_ratio_not_complete
 
-  #same as above, but we do not need to calculate number of triads. It is given
-  function get_balanced_ratio_not_complete(xs::Matrix{Float64}, triad_count::Int; hlp=zeros(size(xs)))
+#same as above, but we do not need to calculate number of triads. It is given
+function get_balanced_ratio_not_complete(
+    xs::Matrix{Float64},
+    triad_count::Int;
+    hlp = zeros(size(xs)),
+)
     maxval = triad_count
 
     mul!(hlp, xs, xs)
     hlp .*= xs
-  
+
     #because of the mentioned above range, one need to transform the output
     BN = (sum(hlp) + maxval) / 2 / maxval
     return BN
-  end
+end
 
 #   In the case of links not in a Matrix but in a Vector. 
-  function get_balanced_ratio_not_complete(x::Vector{Float64}, link_pairs::Vector, triad_cnt::Vector; hlp=zeros(size(x)))
+function get_balanced_ratio_not_complete(
+    x::Vector{Float64},
+    link_pairs::Vector,
+    triad_cnt::Vector;
+    hlp = zeros(size(x)),
+)
     maxval = sum(triad_cnt)
 
-    hlp .= map(y -> sum(map(z -> x[z[1]]*x[z[2]], y)), link_pairs) .* x
-  
+    hlp .= map(y -> sum(map(z -> x[z[1]] * x[z[2]], y)), link_pairs) .* x
+
     #because of the mentioned above range, one need to transform the output
     BN = (sum(hlp) + maxval) / 2 / maxval
     return BN
-  end
+end
 
 # Case with only one layer.
 # Returns the counts of triad types (Delta0, Delta1, Delta2, Delta3)
 # Weights in upper triangle don't have to be close to 1.
-function get_triad_counts(x::Array{Float64,2}, n::Number; hlp=zeros(n,n))
+function get_triad_counts(x::Array{Float64,2}, n::Number; hlp = zeros(n, n))
     Deltas = zeros(4)
 
     hlp = sign.(x) .< 0 # gets Boolean array with True, where a link is negative
@@ -274,7 +298,11 @@ end
 export get_triad_counts
 
 #in the case of incomplete network, one may give triad list
-function get_triad_counts(x::Array{Float64,2}, all_triads::Vector{Any}; hlp=zeros(size(x)))
+function get_triad_counts(
+    x::Array{Float64,2},
+    all_triads::Vector{Any};
+    hlp = zeros(size(x)),
+)
     Deltas = zeros(4)
 
     hlp = sign.(x) .< 0 # gets Boolean array with True, where a link is negative
@@ -289,16 +317,20 @@ function get_triad_counts(x::Array{Float64,2}, all_triads::Vector{Any}; hlp=zero
 end
 
 # In the case of links not in a Matrix but in a Vector. 
-function get_triad_counts(x::Array{Float64,1}, link_pairs::Vector, triad_cnt::Vector; hlp=zeros(size(x)))
+function get_triad_counts(
+    x::Array{Float64,1},
+    link_pairs::Vector,
+    triad_cnt::Vector;
+    hlp = zeros(size(x)),
+)
     Deltas = zeros(4)
 
     hlp .= sign.(x) .< 0 # gets Boolean array with True, where a link is negative
     # hlp .= map(y -> sum(map(z -> x[z[1]]*x[z[2]], y)), link_pairs)
 
     for (i, link) in enumerate(link_pairs)
-
-        for (j,k) in link
-            Deltas[Int(hlp[i]+hlp[j]+hlp[k]+1)] += 1
+        for (j, k) in link
+            Deltas[Int(hlp[i] + hlp[j] + hlp[k] + 1)] += 1
         end
     end
 

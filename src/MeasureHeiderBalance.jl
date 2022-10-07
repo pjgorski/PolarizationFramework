@@ -55,19 +55,30 @@ function calc_heider_attr(
 )
 
     if !isempty(all_links_mat)
-        prob, cb, u0, xy_attr, mask, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt = initialize_calc_heider_attr_incomplete(n,
+        prob,
+        cb,
+        u0,
+        xy_attr,
+        mask,
+        all_triads,
+        triads_count_mat,
+        link_indices,
+        link_pairs,
+        link_pairs_triad_cnt = initialize_calc_heider_attr_incomplete(
+            n,
             attr,
             gamma,
             maxtime,
             ode_fun,
             all_links_mat,
-            input...; 
-            all_triads = all_triads, 
-            triads_count_mat = triads_count_mat, 
-            link_indices = link_indices, 
-            link_pairs = link_pairs, 
-            link_pairs_triad_cnt = link_pairs_triad_cnt )
-        
+            input...;
+            all_triads = all_triads,
+            triads_count_mat = triads_count_mat,
+            link_indices = link_indices,
+            link_pairs = link_pairs,
+            link_pairs_triad_cnt = link_pairs_triad_cnt,
+        )
+
         if ode_fun == Heider9!
             link_indices = mask
             mask = ones(size(link_indices))
@@ -79,7 +90,7 @@ function calc_heider_attr(
         #initial conditions
         need_init_u0 = true
         need_init_xy = true
-        
+
         if length(input) > 0
             if !isempty(input[1])
                 need_init_u0 = false
@@ -144,25 +155,63 @@ function calc_heider_attr(
         Deltas = get_triad_counts(end_signs, n; hlp = x_sim)
         # hb_in_rels = is_hb(sol.u[end], n)
         hb_in_attrs = is_hb(xy_attr, n)
-        br = get_balanced_ratio_efficient(end_signs, Int(n*(n-1)*(n-2)/6); hlp = x_sim)
-        br2 = get_balanced_ratio_efficient(sign.(end_signs), Int(n*(n-1)*(n-2)/6); hlp = x_sim)
+        br = get_balanced_ratio_efficient(
+            end_signs,
+            Int(n * (n - 1) * (n - 2) / 6);
+            hlp = x_sim,
+        )
+        br2 = get_balanced_ratio_efficient(
+            sign.(end_signs),
+            Int(n * (n - 1) * (n - 2) / 6);
+            hlp = x_sim,
+        )
         sim = get_similarity(end_signs, xy_attr, n)
     else
         x_sim = zeros(size(end_signs))
         if end_signs isa Vector
-            Deltas = get_triad_counts(end_signs, link_pairs, link_pairs_triad_cnt; hlp = x_sim)
-            br = get_balanced_ratio_not_complete(end_signs, link_pairs, link_pairs_triad_cnt; hlp = x_sim)
-            br2 = get_balanced_ratio_not_complete(sign.(end_signs), link_pairs, link_pairs_triad_cnt; hlp = x_sim)
+            Deltas =
+                get_triad_counts(end_signs, link_pairs, link_pairs_triad_cnt; hlp = x_sim)
+            br = get_balanced_ratio_not_complete(
+                end_signs,
+                link_pairs,
+                link_pairs_triad_cnt;
+                hlp = x_sim,
+            )
+            br2 = get_balanced_ratio_not_complete(
+                sign.(end_signs),
+                link_pairs,
+                link_pairs_triad_cnt;
+                hlp = x_sim,
+            )
 
-            sim = get_similarity2(end_signs, xy_attr[link_indices], sum(sign.(end_signs) .> 0) / 2)
-            hb_in_attrs = get_balanced_ratio_not_complete(sign.(xy_attr[link_indices]), link_pairs, link_pairs_triad_cnt; hlp = x_sim) == 1
+            sim = get_similarity2(
+                end_signs,
+                xy_attr[link_indices],
+                sum(sign.(end_signs) .> 0) / 2,
+            )
+            hb_in_attrs =
+                get_balanced_ratio_not_complete(
+                    sign.(xy_attr[link_indices]),
+                    link_pairs,
+                    link_pairs_triad_cnt;
+                    hlp = x_sim,
+                ) == 1
         else
             Deltas = get_triad_counts(end_signs, all_triads; hlp = x_sim)
             br = get_balanced_ratio_not_complete(end_signs, length(all_triads); hlp = x_sim)
-            br2 = get_balanced_ratio_not_complete(sign.(end_signs), length(all_triads); hlp = x_sim)
+            br2 = get_balanced_ratio_not_complete(
+                sign.(end_signs),
+                length(all_triads);
+                hlp = x_sim,
+            )
             sim = get_similarity2(end_signs, xy_attr, sum(sign.(end_signs) .> 0) / 2)
 
-            hb_in_attrs = get_balanced_ratio_not_complete(sign.(xy_attr .* mask), length(all_triads); hlp = x_sim) == 1
+            hb_in_attrs =
+                get_balanced_ratio_not_complete(
+                    sign.(xy_attr .* mask),
+                    length(all_triads);
+                    hlp = x_sim,
+                ) == 1
         end
     end
     weak_balance_in_complete_graph = Deltas[1+1] == 0
@@ -172,7 +221,8 @@ function calc_heider_attr(
     hb_in_rels = br2 == 1
 
 
-    ishb_sim_par = [hb_in_rels,
+    ishb_sim_par = [
+        hb_in_rels,
         hb_in_attrs,
         sim,
         br,
@@ -215,13 +265,14 @@ function calc_heider_attr(
 end
 export calc_heider_attr
 
-function initialize_calc_heider_attr_incomplete(n::Int,
+function initialize_calc_heider_attr_incomplete(
+    n::Int,
     attr::AbstractAttributes,
     gamma::Float64,
     maxtime::Float64,
     ode_fun::Function,
     all_links_mat::Matrix, #this should be of size (n,n) and this would show which relations may change and which cannot because they do not exist
-    input...; 
+    input...;
     all_triads = [], # list of all triads
     # all_links = [], # list of all links
     # triads_around_links_dict = [], #dict with which links form triads around other links
@@ -232,7 +283,7 @@ function initialize_calc_heider_attr_incomplete(n::Int,
 )
 
     # help variable
-    mask = triu(trues(n,n), 1)
+    mask = triu(trues(n, n), 1)
     mask .*= all_links_mat
 
     if isempty(all_triads)
@@ -243,7 +294,7 @@ function initialize_calc_heider_attr_incomplete(n::Int,
     if ode_fun in [Heider72!, Heider73!]
         if isempty(triads_count_mat)
             all_links = get_links_in_triads(all_triads)
-            
+
             triads_around_links_dict = get_triangles_around_links(all_triads)
             counts = link_triangles_count(triads_around_links_dict; links = all_links)
 
@@ -256,7 +307,7 @@ function initialize_calc_heider_attr_incomplete(n::Int,
     end
     if ode_fun == Heider9!
         if isempty(link_indices)
-            link_indices = findall(triu(all_links_mat,1)[:] .> 0) 
+            link_indices = findall(triu(all_links_mat, 1)[:] .> 0)
         end
         nl = length(link_indices)
 
@@ -293,7 +344,7 @@ function initialize_calc_heider_attr_incomplete(n::Int,
     if need_init_xy
         val0_attr = get_attributes(attr, n)
         xy_attr = get_attribute_layer_weights(attr, val0_attr)
-    end    
+    end
 
     u0 .*= mask
     xy_attr .*= mask
@@ -335,10 +386,28 @@ function initialize_calc_heider_attr_incomplete(n::Int,
     #solving
     if ode_fun == Heider9!
         prob = ODEProblem(ode_fun, u0_inc, tspan, p)
-        return prob, cb, u0, xy_attr, link_indices, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt 
+        return prob,
+        cb,
+        u0,
+        xy_attr,
+        link_indices,
+        all_triads,
+        triads_count_mat,
+        link_indices,
+        link_pairs,
+        link_pairs_triad_cnt
     else
         prob = ODEProblem(ode_fun, u0, tspan, p)
-        return prob, cb, u0, xy_attr, mask, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt 
+        return prob,
+        cb,
+        u0,
+        xy_attr,
+        mask,
+        all_triads,
+        triads_count_mat,
+        link_indices,
+        link_pairs,
+        link_pairs_triad_cnt
     end
 end
 export initialize_calc_heider_attr_incomplete
@@ -428,7 +497,7 @@ function using_heider_attr(
     files_folder::Vector{String} = ["data"],
     filename_prefix::String = "",
     all_links_mat = [], #this should be given if the considered network is not complete
-    kwargs...
+    kwargs...,
 )
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
@@ -479,8 +548,17 @@ function using_heider_attr(
         times = zeros(zmax)
         for rep = 1:zmax
             #simulation
-            (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                calc_heider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false; all_links_mat = all_links_mat, kwargs...)
+            (ishb_sim_par, t, u, u0, xy_attr, sol) = calc_heider_attr(
+                n,
+                attr,
+                gamma1,
+                maxtime,
+                ode_fun,
+                solver,
+                false;
+                all_links_mat = all_links_mat,
+                kwargs...,
+            )
             realization_counter += 1
 
             #work on results
@@ -496,7 +574,7 @@ function using_heider_attr(
             global_polarization[rep] = ishb_sim_par
 
             if u isa Vector
-                link_indices = (;kwargs...).link_indices
+                link_indices = (; kwargs...).link_indices
                 initial_neg_links_count[rep] = sum(u0[link_indices] .< 0)
                 links_destab_changed[3, rep] = sum(u[u0[link_indices].>0] .< 0) #number of initial pos links that changed to negative
                 links_destab_changed[4, rep] = sum(u[u0[link_indices].<0] .> 0) #number of initial neg links that changed to positive

@@ -93,18 +93,18 @@ function get_triads(A)
 
     triads = []
 
-    for i in 1:N
-        for j in (i+1):N
-            if A[i,j] > 0
-                for k in (j+1):N
-                    if A[i,k] > 0 && A[j,k] > 0
-                        push!(triads, (i,j,k))
+    for i = 1:N
+        for j = (i+1):N
+            if A[i, j] > 0
+                for k = (j+1):N
+                    if A[i, k] > 0 && A[j, k] > 0
+                        push!(triads, (i, j, k))
                     end
                 end
             end
         end
     end
-    
+
     return triads
 end
 export get_triads
@@ -114,14 +114,13 @@ function get_links_in_triads(all_triads)
     links = []
     for triad in all_triads
         i, j, k = triad
-        push!(links, (i,j))
-        push!(links, (i,k))
-        push!(links, (j,k))
+        push!(links, (i, j))
+        push!(links, (i, k))
+        push!(links, (j, k))
     end
     links = unique(links)
     # sort according to y and then x. 
-    sort!(links,
-            lt = (x, y) -> (x[2] < y[2] || (x[2] == y[2] && x[1] < y[1])))
+    sort!(links, lt = (x, y) -> (x[2] < y[2] || (x[2] == y[2] && x[1] < y[1])))
     return links
 end
 export get_links_in_triads
@@ -129,7 +128,7 @@ export get_links_in_triads
 #creates an asjacency matrix based on given links and number of nodes. 
 #It is used to create adjacency matrix with links forming triads. 
 function get_adj_necessary_links(n, links; typ = Int)
-    A = zeros(typ,n, n)
+    A = zeros(typ, n, n)
 
     for link in links
         ind1, ind2 = link
@@ -153,7 +152,7 @@ end
 # works for simle graphs (not directed)
 function create_line_graph(g::Graph)
     # number of nodes in LG
-    ln = g.ne 
+    ln = g.ne
     lg = Graph()
     add_vertices!(lg, ln)
 
@@ -167,7 +166,7 @@ function create_line_graph(g::Graph)
         for ai in [a1, a2]
             nais = deepcopy(neighbors(g, ai))
             # println(collect(edges(g)))
-            filter!(x-> !(x in [a1, a2]), nais)
+            filter!(x -> !(x in [a1, a2]), nais)
             # println(collect(edges(g)))
             #get edge numbers
             neis = [dict_e[Edge(min(ai, nai), max(ai, nai))] for nai in nais]
@@ -190,9 +189,9 @@ function get_triangles_around_links(g::Graph)
 
     # edgelist = get_edgelist_it(g)
     # edgelist2 = [(edge.src, edge.dst) for edge in edgelist]
-    dict_e = Dict{Tuple{Int64, Int64}, Vector{Vector{Tuple{Int64, Int64}}}}()
+    dict_e = Dict{Tuple{Int64,Int64},Vector{Vector{Tuple{Int64,Int64}}}}()
 
-    for agent in 1:n
+    for agent = 1:n
         neighs = neighbors(g, agent)
 
         for neigh in neighs
@@ -211,17 +210,26 @@ function get_triangles_around_links(g::Graph)
                 if !haskey(dict_e, (agent, neigh))
                     dict_e[(agent, neigh)] = [[(agent, com_neigh), (neigh, com_neigh)]]
                 else
-                    append!(dict_e[(agent, neigh)], [[(agent, com_neigh), (neigh, com_neigh)]])
+                    append!(
+                        dict_e[(agent, neigh)],
+                        [[(agent, com_neigh), (neigh, com_neigh)]],
+                    )
                 end
                 if !haskey(dict_e, (agent, com_neigh))
                     dict_e[(agent, com_neigh)] = [[(agent, neigh), (neigh, com_neigh)]]
                 else
-                    append!(dict_e[(agent, com_neigh)], [[(agent, neigh), (neigh, com_neigh)]])
+                    append!(
+                        dict_e[(agent, com_neigh)],
+                        [[(agent, neigh), (neigh, com_neigh)]],
+                    )
                 end
                 if !haskey(dict_e, (neigh, com_neigh))
                     dict_e[(neigh, com_neigh)] = [[(agent, neigh), (agent, com_neigh)]]
                 else
-                    append!(dict_e[(neigh, com_neigh)], [[(agent, neigh), (agent, com_neigh)]])
+                    append!(
+                        dict_e[(neigh, com_neigh)],
+                        [[(agent, neigh), (agent, com_neigh)]],
+                    )
                 end
             end
         end
@@ -230,7 +238,7 @@ function get_triangles_around_links(g::Graph)
 end
 
 function get_triangles_around_links(triads::Vector{Any})
-    dict_e = Dict{Tuple{Int64, Int64}, Vector{Vector{Tuple{Int64, Int64}}}}()
+    dict_e = Dict{Tuple{Int64,Int64},Vector{Vector{Tuple{Int64,Int64}}}}()
 
     for (ti, triad) in enumerate(triads)
         agent, neigh, com_neigh = triad
@@ -263,8 +271,7 @@ function get_triangles_around_links(dict_e::Dict, links::Vector)
 
     dict_l = Dict(links .=> 1:nl)
 
-    return [[(dict_l[pair[1]], dict_l[pair[2]]) for pair in dict_e[link]] 
-        for link in links]
+    return [[(dict_l[pair[1]], dict_l[pair[2]]) for pair in dict_e[link]] for link in links]
 end
 
 function link_triangles_count(dict_e::Dict; links = [])
@@ -298,6 +305,6 @@ end
 function link_triangles_mat_inv(n, links, counts)
     mat = zeros(n, n)
 
-    map(i -> mat[links[i]...] = 1/counts[i], 1:length(links))
+    map(i -> mat[links[i]...] = 1 / counts[i], 1:length(links))
     return mat
 end
