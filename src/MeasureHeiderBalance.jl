@@ -10,6 +10,7 @@ using DifferentialEquations
 using Plots
 using LinearAlgebra
 using Dates
+using Graphs
 
 # function to measure HB in the case of a single-layered system with attributes
 # n - number of agents
@@ -42,9 +43,235 @@ function calc_heider_attr(
     ode_fun::Function,
     solver,
     show_plot::Bool,
-    input...,
+    input...;
+    all_links_mat = [], #if existing, this should be of size (n,n) and this would show which relations may change and which cannot because they do not exist
+    all_triads = [], # list of all triads
+    # all_links = [], # list of all links
+    # triads_around_links_dict = [], #dict with which links form triads around other links
+    triads_count_mat = [], # triad count matrix for each link. This is used in calculation of derivatives
+    link_indices = [], # indices from adjacency matrix of links belonging to triads, i.e., links that are interesting in terms dynamics
+    link_pairs = [], # vector (Vector{Vector{Tuple{Int64, Int64}}}) corresponding to link_indices. Each element is the vector with tuples of two link indices that close the triad with the given link
+    link_pairs_triad_cnt = [], # vector corresponding to link_indices. Contains number of triads for each link. 
 )
-    #initial conditions
+
+    if !isempty(all_links_mat)
+        prob, cb, u0, xy_attr, mask, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt = initialize_calc_heider_attr_incomplete(n,
+            attr,
+            gamma,
+            maxtime,
+            ode_fun,
+            all_links_mat,
+            input...; 
+            all_triads = all_triads, 
+            triads_count_mat = triads_count_mat, 
+            link_indices = link_indices, 
+            link_pairs = link_pairs, 
+            link_pairs_triad_cnt = link_pairs_triad_cnt )
+        
+        if ode_fun == Heider9!
+            link_indices = mask
+            mask = ones(size(link_indices))
+            # mask .*= all_links_mat
+        else
+            mask .*= all_links_mat
+        end
+    else
+        #initial conditions
+        need_init_u0 = true
+        need_init_xy = true
+        
+        if length(input) > 0
+            if !isempty(input[1])
+                need_init_u0 = false
+                u0 = input[1]
+            end
+            if length(input) == 2
+                if !isempty(input[2])
+                    need_init_xy = false
+                    xy_attr = input[2]
+                end
+            end
+        end
+
+        if need_init_u0
+            u0 = triu((rand(n, n) * 2) .- 1, 1)
+        end
+        if need_init_xy
+            val0_attr = get_attributes(attr, n)
+            xy_attr = get_attribute_layer_weights(attr, val0_attr)
+        end
+
+        # help variable
+        mask = triu(trues(size(u0)), 1)
+
+        condition_here = (u, t, integrator) -> condition2(u, t, integrator, mask)
+        affect!(integrator) = terminate!(integrator)
+        cb = DiscreteCallback(condition_here, affect!)
+
+        #ode and model parameters
+        tspan = (0.0, maxtime)
+
+        lay1mul = zeros(n, n)
+        x_sim = zeros(n, n)
+
+        p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
+        if ode_fun == Heider72!
+            p = (p..., triads_count_mat)
+        elseif ode_fun == Heider73!
+            p[2] .*= triads_count_mat
+        end
+
+        #solving
+        prob = ODEProblem(ode_fun, u0, tspan, p)
+    end
+    sol = solve(
+        prob,
+        solver,
+        reltol = 1e-6,
+        abstol = 1e-12,
+        callback = cb,
+        isoutofdomain = (u, p, t) -> any(x -> abs.(x) >= 1, u),
+        save_everystep = show_plot,
+    )
+
+    #estimating output
+    end_signs = sol.u[end] .* mask
+    # println(end_signs)
+
+    paradise = is_paradise(end_signs, n)
+    hell = is_hell(end_signs, n)
+    if isempty(all_links_mat)
+        Deltas = get_triad_counts(end_signs, n; hlp = x_sim)
+        # hb_in_rels = is_hb(sol.u[end], n)
+        hb_in_attrs = is_hb(xy_attr, n)
+        br = get_balanced_ratio_efficient(end_signs, Int(n*(n-1)*(n-2)/6); hlp = x_sim)
+        br2 = get_balanced_ratio_efficient(sign.(end_signs), Int(n*(n-1)*(n-2)/6); hlp = x_sim)
+        sim = get_similarity(end_signs, xy_attr, n)
+    else
+        x_sim = zeros(size(end_signs))
+        if end_signs isa Vector
+            Deltas = get_triad_counts(end_signs, link_pairs, link_pairs_triad_cnt; hlp = x_sim)
+            br = get_balanced_ratio_not_complete(end_signs, link_pairs, link_pairs_triad_cnt; hlp = x_sim)
+            br2 = get_balanced_ratio_not_complete(sign.(end_signs), link_pairs, link_pairs_triad_cnt; hlp = x_sim)
+
+            sim = get_similarity2(end_signs, xy_attr[link_indices], sum(sign.(end_signs) .> 0) / 2)
+            hb_in_attrs = get_balanced_ratio_not_complete(sign.(xy_attr[link_indices]), link_pairs, link_pairs_triad_cnt; hlp = x_sim) == 1
+        else
+            Deltas = get_triad_counts(end_signs, all_triads; hlp = x_sim)
+            br = get_balanced_ratio_not_complete(end_signs, length(all_triads); hlp = x_sim)
+            br2 = get_balanced_ratio_not_complete(sign.(end_signs), length(all_triads); hlp = x_sim)
+            sim = get_similarity2(end_signs, xy_attr, sum(sign.(end_signs) .> 0) / 2)
+
+            hb_in_attrs = get_balanced_ratio_not_complete(sign.(xy_attr .* mask), length(all_triads); hlp = x_sim) == 1
+        end
+    end
+    weak_balance_in_complete_graph = Deltas[1+1] == 0
+    local_polarization = get_local_polarization(Deltas)
+    global_polarization = weak_balance_in_complete_graph && (!paradise)
+
+    hb_in_rels = br2 == 1
+
+
+    ishb_sim_par = [hb_in_rels,
+        hb_in_attrs,
+        sim,
+        br,
+        paradise,
+        hell,
+        Deltas,
+        weak_balance_in_complete_graph,
+        local_polarization,
+        global_polarization,
+    ]
+
+    if show_plot
+
+        if end_signs isa Vector
+            h = plot(
+                sol,
+                linewidth = 5,
+                title = "Solution to the linear ODE with a thick line",
+                xaxis = "Time (t)",
+                yaxis = "weights(t)",
+                ylim = [-1, +1],
+            )
+        else
+            h = plot(
+                sol,
+                linewidth = 5,
+                title = "Solution to the linear ODE with a thick line",
+                xaxis = "Time (t)",
+                yaxis = "weights(t)",
+                ylim = [-1, +1],
+                vars = reshape(1:n^2, n, n)[mask],
+            )
+        end
+        legend = false
+        display(h)
+        #gui()
+    end
+
+    return (ishb_sim_par, sol.t[end], end_signs, u0, xy_attr, sol)
+end
+export calc_heider_attr
+
+function initialize_calc_heider_attr_incomplete(n::Int,
+    attr::AbstractAttributes,
+    gamma::Float64,
+    maxtime::Float64,
+    ode_fun::Function,
+    all_links_mat::Matrix, #this should be of size (n,n) and this would show which relations may change and which cannot because they do not exist
+    input...; 
+    all_triads = [], # list of all triads
+    # all_links = [], # list of all links
+    # triads_around_links_dict = [], #dict with which links form triads around other links
+    triads_count_mat = [], # triad count matrix for each link. This is used in calculation of derivatives
+    link_indices = [], # indices from adjacency matrix of links belonging to triads, i.e., links that are interesting in terms dynamics
+    link_pairs = [], # vector (Vector{Vector{Tuple{Int64, Int64}}}) corresponding to link_indices. Each element is the vector with tuples of two link indices that close the triad with the given link
+    link_pairs_triad_cnt = [], # vector corresponding to link_indices. Contains number of triads for each link. 
+)
+
+    # help variable
+    mask = triu(trues(n,n), 1)
+    mask .*= all_links_mat
+
+    if isempty(all_triads)
+        all_triads = get_triads(all_links_mat)
+    end
+
+
+    if ode_fun in [Heider72!, Heider73!]
+        if isempty(triads_count_mat)
+            all_links = get_links_in_triads(all_triads)
+            
+            triads_around_links_dict = get_triangles_around_links(all_triads)
+            counts = link_triangles_count(triads_around_links_dict; links = all_links)
+
+            if ode_fun in [Heider72!]
+                triads_count_mat = link_triangles_mat_inv(n, all_links, counts)
+            elseif ode_fun == Heider73!
+                triads_count_mat = link_triangles_mat(n, all_links, counts)
+            end
+        end
+    end
+    if ode_fun == Heider9!
+        if isempty(link_indices)
+            link_indices = findall(triu(all_links_mat,1)[:] .> 0) 
+        end
+        nl = length(link_indices)
+
+        if isempty(link_pairs)
+            dict_e = get_triangles_around_links(all_triads)
+            all_links = get_links_in_triads(all_triads)
+            link_pairs = get_triangles_around_links(dict_e, all_links)
+        end
+
+        if isempty(link_pairs_triad_cnt)
+            link_pairs_triad_cnt = [length(link) for link in link_pairs]
+        end
+    end
+
+
     need_init_u0 = true
     need_init_xy = true
     if length(input) > 0
@@ -66,73 +293,69 @@ function calc_heider_attr(
     if need_init_xy
         val0_attr = get_attributes(attr, n)
         xy_attr = get_attribute_layer_weights(attr, val0_attr)
+    end    
+
+    u0 .*= mask
+    xy_attr .*= mask
+
+    if ode_fun == Heider9!
+        u0_inc = u0[link_indices]
+        xy_attr_inc = xy_attr[link_indices]
     end
 
-    # help variable
-    mask = triu(trues(size(u0)), 1)
+    if ode_fun == Heider9!
+        condition_here = (u, t, integrator) -> condition2(u, t, integrator, 1:nl)
+    else
+        condition_here = (u, t, integrator) -> condition2(u, t, integrator, mask)
+    end
 
-    condition_here(u, t, integrator) = condition2(u, t, integrator, mask)
     affect!(integrator) = terminate!(integrator)
     cb = DiscreteCallback(condition_here, affect!)
 
     #ode and model parameters
     tspan = (0.0, maxtime)
 
-    lay1mul = zeros(n, n)
-    x_sim = zeros(n, n)
+    if ode_fun == Heider9!
+        lay1mul = zeros(nl)
 
-    p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
+        p = (gamma .* xy_attr_inc, lay1mul, link_pairs, link_pairs_triad_cnt)
+    else
 
-    #solving
-    prob = ODEProblem(ode_fun, u0, tspan, p)
-    sol = solve(
-        prob,
-        solver,
-        reltol = 1e-6,
-        abstol = 1e-12,
-        callback = cb,
-        isoutofdomain = (u, p, t) -> any(x -> abs.(x) >= 1, u),
-        save_everystep = show_plot,
-    )
+        lay1mul = zeros(n, n)
+        x_sim = zeros(n, n)
 
-    #estimating output
-    paradise = is_paradise(sol.u[end], n)
-    Deltas = get_triad_counts(sol.u[end], n)
-    weak_balance_in_complete_graph = Deltas[1+1] == 0
-    local_polarization = get_local_polarization(Deltas)
-    global_polarization = weak_balance_in_complete_graph && (!paradise)
-    ishb_sim_par = [
-        is_hb(sol.u[end], n),
-        is_hb(xy_attr, n),
-        get_similarity(sol.u[end], xy_attr, n),
-        get_balanced_ratio(sol.u[end], n),
-        paradise,
-        is_hell(sol.u[end], n),
-        Deltas,
-        weak_balance_in_complete_graph,
-        local_polarization,
-        global_polarization,
-    ]
-
-    if show_plot
-
-        h = plot(
-            sol,
-            linewidth = 5,
-            title = "Solution to the linear ODE with a thick line",
-            xaxis = "Time (t)",
-            yaxis = "weights(t)",
-            ylim = [-1, +1],
-            vars = reshape(1:n^2, n, n)[mask],
-        )
-        legend = false
-        display(h)
-        #gui()
+        p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
+        if ode_fun == Heider72!
+            p = (p..., triads_count_mat)
+        elseif ode_fun == Heider73!
+            p[2] .*= triads_count_mat
+        end
     end
 
-    return (ishb_sim_par, sol.t[end], sol.u[end], u0, xy_attr, sol)
+    #solving
+    if ode_fun == Heider9!
+        prob = ODEProblem(ode_fun, u0_inc, tspan, p)
+        return prob, cb, u0, xy_attr, link_indices, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt 
+    else
+        prob = ODEProblem(ode_fun, u0, tspan, p)
+        return prob, cb, u0, xy_attr, mask, all_triads, triads_count_mat, link_indices, link_pairs, link_pairs_triad_cnt 
+    end
 end
-export calc_heider_attr
+export initialize_calc_heider_attr_incomplete
+
+# function calc_heider_attr(
+#     g::SimpleGraph
+#     attr::AbstractAttributes,
+#     gamma::Float64,
+#     maxtime::Float64,
+#     ode_fun::Function,
+#     solver,
+#     show_plot::Bool,
+#     input...,
+#     )
+#     n = nv(g)
+#     relations
+# end
 
 # Function creating results file. It parses parameters creating a unique file name and saves initially this file. 
 # For parameters description see `using_heider_attr`. 
@@ -181,6 +404,10 @@ end
 # files_folder - folder name inside the project the results should be saved (default "data"). 
 #       This can be also an array of folder names in the correct folder structure. 
 # filename_prefix - string that should start each simulation results' file (default "")
+# all_links_mat - adjacency matrix of links that should be considered. This should be used if not the complete network should be used. 
+# kwargs - optional arguments used in the case of not complete graph topology (not empty `all_links_mat`). 
+#       kwargs contain variables related to the topology. Goal is to speed up calculations. 
+#       See `calc_heider_attr` description for details. 
 # 
 # `disp_more_every` and `save_each` work like that, that if the specified time has past
 # then sth is displayed/saved. But it doesn't mean exact time of action.
@@ -200,6 +427,8 @@ function using_heider_attr(
     save_each = 600,
     files_folder::Vector{String} = ["data"],
     filename_prefix::String = "",
+    all_links_mat = [], #this should be given if the considered network is not complete
+    kwargs...
 )
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
@@ -251,7 +480,7 @@ function using_heider_attr(
         for rep = 1:zmax
             #simulation
             (ishb_sim_par, t, u, u0, xy_attr, sol) =
-                calc_heider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false)
+                calc_heider_attr(n, attr, gamma1, maxtime, ode_fun, solver, false; all_links_mat = all_links_mat, kwargs...)
             realization_counter += 1
 
             #work on results
@@ -266,9 +495,16 @@ function using_heider_attr(
             local_polarization[rep],
             global_polarization[rep] = ishb_sim_par
 
-            initial_neg_links_count[rep] = sum(u0 .< 0)
-            links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
-            links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
+            if u isa Vector
+                link_indices = (;kwargs...).link_indices
+                initial_neg_links_count[rep] = sum(u0[link_indices] .< 0)
+                links_destab_changed[3, rep] = sum(u[u0[link_indices].>0] .< 0) #number of initial pos links that changed to negative
+                links_destab_changed[4, rep] = sum(u[u0[link_indices].<0] .> 0) #number of initial neg links that changed to positive
+            else
+                initial_neg_links_count[rep] = sum(u0 .< 0)
+                links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
+                links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
+            end
 
             if t < maxtime #we have stability
                 HB[rep] = ishb_sim_par[1]
