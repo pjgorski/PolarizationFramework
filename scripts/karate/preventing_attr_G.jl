@@ -9,8 +9,8 @@ using Graphs
 using LinearAlgebra
 
 # ns = [5, 9]#[9,15,25]
-g = KarateGraph()
-ns = [nv(g)]
+gr = KarateGraph()
+ns = [nv(gr)]
 A = adjacency_matrix(KarateGraph())
 all_triads = get_triads(A)
 all_links = get_links_in_triads(all_triads)
@@ -26,7 +26,7 @@ reps = [100]
 reps_dict = Dict(zip(ns, reps))
 # two parts of simulations
 gs = [1:2:21...]
-# gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
