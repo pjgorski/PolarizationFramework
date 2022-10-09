@@ -63,7 +63,7 @@ for params in dicts
         save_each = 600,
         files_folder = ["data", "karate-sims"],
         filename_prefix = "DesKarG",
-        graph = graph,
+        graph = gr,
     )
 
 end
