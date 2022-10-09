@@ -412,20 +412,6 @@ function initialize_calc_heider_attr_incomplete(
 end
 export initialize_calc_heider_attr_incomplete
 
-# function calc_heider_attr(
-#     g::SimpleGraph
-#     attr::AbstractAttributes,
-#     gamma::Float64,
-#     maxtime::Float64,
-#     ode_fun::Function,
-#     solver,
-#     show_plot::Bool,
-#     input...,
-#     )
-#     n = nv(g)
-#     relations
-# end
-
 # Function creating results file. It parses parameters creating a unique file name and saves initially this file. 
 # For parameters description see `using_heider_attr`. 
 # Returns a Tuple with:
@@ -684,11 +670,19 @@ export using_heider_attr
 # Agents are divided into two groups and form positive links (+0.99) inside those groups
 # and negative (-0.99) to agents outside their group. 
 # Thus, this simulates destabilization of the polarized, initial state. 
+# One can also specify a network that is simulated. It can be done in two ways:
+#   by assigning an adjacency matrix to variable `all_links_mat`.
+#       For speed purposes, it is recommended that only links that are in triads 
+#       are given in the adjacency matrix. 
+#   by assigning a keyword argument `graph` that is of the type `Graph` from `Graphs` package. 
+# One may also specify the division of nodes into two groups 
+# by specifying the keyword argument `specified_division`.
 # 
 # Parameters: 
 # n - number of agents
 # attr - attribute type; contains all information about attributes
 # gammas - a vector of coupling strengths to simulate
+# larger_size - size of the larger group in the initially balanced network
 # zmax - number of repetitions
 # maxtime - maximal time of calculating differential equations
 # ode_fun_name - function name calculating derivatives (`string`)
@@ -700,6 +694,10 @@ export using_heider_attr
 # files_folder - folder name inside the project the results should be saved (default "data")
 #       This can be also an array of folder names in the correct folder structure. 
 # filename_prefix - string that should start each simulation results' file (default "")
+# graph - (type `Graphs.Graph`) specifies connections if sparse networks are considered. 
+# all_links_mat - specifies adjacency matrix if sparse networks are considered.
+# specified_division - (Vector of Vectors) specifies the initial division of nodes into groups. 
+#     If this parameter is given, `larger_size` does not matter. 
 # 
 # `disp_more_every` and `save_each` work like that, that if the specified time has past
 # then sth is displayed/saved. But it doesn't mean exact time of action.
@@ -720,12 +718,75 @@ function using_heider_attr_destab(
     save_each = 600,
     files_folder::Vector{String} = ["data"],
     filename_prefix::String = "",
+    graph::Graph = Graph(), # `graph` or `all_links_mat` should be given if the considered network is not complete
+    all_links_mat = [], # `graph` or `all_links_mat` should be given if the considered network is not complete
+    specified_division = [], # if incomplete network is considered, here a specific initial division of nodes into two groups can be given. 
+    kwargs...,
 )
 
     ode_fun = getfield(PolarizationFramework, Symbol(ode_fun_name))
     solver = AutoTsit5(Rodas5(autodiff = false))
 
-    rl_weights = init_random_balanced_relations(n, larger_size)
+    if nv(graph) > 0 || ~isempty(all_links_mat)
+        if nv(graph) > 0
+            assumed_n = nv(graph)
+            @assert nv(graph) == n "Wrong specified number of nodes `n` and given number of nodes in `graph."
+        else
+            assumed_n = size(all_links_mat)[1]
+        end
+        @assert assumed_n == n "Wrong specified number of nodes `n` and given number of nodes in `graph` or `all_links_mat`."
+        
+        if isempty(all_links_mat)
+            all_links_mat = adjacency_matrix(graph)
+            all_triads = get_triads(all_links_mat)
+            all_links = get_links_in_triads(all_triads)
+            all_links_mat = get_adj_necessary_links(n, all_links; typ = Float64);
+
+            kwargs = (kwargs..., all_triads = all_triads)
+        end
+
+        kwargs_dict = Dict(kwargs)
+
+        if ode_fun_name == "Heider72!"
+            if !haskey(kwargs_dict, :triads_count_mat)
+                triads_around_links_dict = get_triangles_around_links(kwargs_dict[:all_triads])
+                all_links = get_links_in_triads(kwargs_dict[:all_triads])
+                counts = link_triangles_count(triads_around_links_dict; links = all_links)
+                triads_count_mat = link_triangles_mat_inv(n, all_links, counts)
+
+                kwargs = (kwargs..., triads_count_mat = triads_count_mat)
+            end
+        elseif ode_fun_name == "Heider9!"
+            if !haskey(kwargs_dict, :link_indices)
+                link_indices = findall(triu(all_links_mat,1)[:] .> 0) 
+
+                kwargs = (kwargs..., link_indices = link_indices)
+            end
+
+            if !haskey(kwargs_dict, :link_pairs)
+                triads_around_links_dict = get_triangles_around_links(kwargs_dict[:all_triads])
+                all_links = get_links_in_triads(kwargs_dict[:all_triads])
+
+                link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
+
+                kwargs = (kwargs..., link_pairs = link_pairs)
+            end
+
+            if !haskey(kwargs_dict, :link_pairs_triad_cnt)
+                link_pairs_triad_cnt = [length(link) for link in kwargs_dict[:link_pairs]];
+                
+                kwargs = (kwargs..., link_pairs_triad_cnt = link_pairs_triad_cnt)
+            end
+        end
+
+    end
+
+    if ~isempty(all_links_mat) && ~isempty(specified_division)
+        rl_weights = init_balanced_relations(n, specified_division)
+        rl_weights .*= all_links_mat
+    else
+        rl_weights = init_random_balanced_relations(n, larger_size)
+    end
 
     r, filename = initialize_file(
         n,
@@ -763,7 +824,14 @@ function using_heider_attr_destab(
         weak_balance_in_complete_graph = zeros(zmax)
         local_polarization = zeros(zmax)
         global_polarization = zeros(zmax)
-        initial_neg_links_count = ones(zmax) * larger_size * (n - larger_size)
+        if isempty(all_links_mat)
+            initial_neg_links_count = ones(zmax) * larger_size * (n - larger_size)
+        else
+            initial_neg_links_count = ones(zmax) .* sum(rl_weights .< 0)
+            if issymmetric(all_links_mat)
+                initial_neg_links_count ./= 2
+            end
+        end
         links_destab_changed = zeros(4, zmax)
 
         sim = zeros(zmax)
@@ -775,8 +843,16 @@ function using_heider_attr_destab(
             val0_attr = get_attributes(attr, n)
             al_weights = get_attribute_layer_weights(attr, val0_attr)
 
-            (pos_destab, neg_destab) =
-                get_destabilized_links_count(rl_weights, al_weights, gamma1)
+            if isempty(all_links_mat)
+                (pos_destab, neg_destab) =
+                    get_destabilized_links_count(rl_weights, al_weights, gamma1)
+            elseif ode_fun == Heider72!
+                (pos_destab, neg_destab) =
+                    get_destabilized_links_count(rl_weights, al_weights, gamma1, kwargs_dict[:triads_count_mat])
+            elseif ode_fun == Heider9!
+                (pos_destab, neg_destab) =
+                    get_destabilized_links_count(rl_weights, al_weights, gamma1, kwargs_dict[:link_pairs], kwargs_dict[:link_pairs_triad_cnt])
+            end
             links_destab_changed[1, :] .= pos_destab
             links_destab_changed[2, :] .= neg_destab
             if pos_destab + neg_destab == 0 #no destabilization => no sense of further calculations
@@ -809,7 +885,9 @@ function using_heider_attr_destab(
                     solver,
                     false,
                     rl_weights,
-                    al_weights,
+                    al_weights;
+                    all_links_mat = all_links_mat,
+                    kwargs...,
                 )
 
                 #work on results
@@ -824,8 +902,13 @@ function using_heider_attr_destab(
                 local_polarization[rep],
                 global_polarization[rep] = ishb_sim_par
 
-                links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
-                links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
+                if u isa Vector
+                    links_destab_changed[3, rep] = sum(u[u0[kwargs_dict[:link_indices]].>0] .< 0) #number of initial pos links that changed to negative
+                    links_destab_changed[4, rep] = sum(u[u0[kwargs_dict[:link_indices]].<0] .> 0) #number of initial neg links that changed to positive
+                else
+                    links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
+                    links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
+                end
 
                 if t < maxtime #we have stability
                     HB[rep] = ishb_sim_par[1]

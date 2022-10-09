@@ -424,16 +424,36 @@ function init_random_balanced_relations(n, dist_to_1 = 0.01)
     return xy_attr
 end
 
-# returns counts of pos and neg links that are destabilized based only al_weights and gamma. 
-function get_destabilized_links_count(rl_weights, al_weights, gamma)
-    n = size(rl_weights, 1)
-    rl_sim = Symmetric(rl_weights)
-    lay1mul = rl_sim * rl_sim ./ (n - 2)
+function init_balanced_relations(n, specified_division::Vector{Vector{Int64}}, dist_to_1 = 0.01)
+    groups = length(specified_division)
+
+    art_attr = zeros(Int, n)
+    xy_attr = zeros(n,n)
+    
+    for g in 1:groups
+        art_attr[specified_division[g]] .= g
+    end
+
+    for i = 1:n
+        xy_attr[i, :] = (art_attr[i] .== art_attr) .* 2 .- 1
+    end
+    xy_attr .= triu(xy_attr, 1)
+
+    xy_attr = xy_attr .* (1 - dist_to_1)
+    return xy_attr
+end
+export init_balanced_relations
+
+# returns counts of pos and neg links that are destabilized based only 
+# calculated two parts of differential equations 
+# (triad multiplication and attribute influence)
+function get_destabilized_links_count(triad_multiplication, attr_influence)
+    lay1mul = triad_multiplication
     sgn_rl = sign.(lay1mul)
-    sgn_al = sign.(al_weights)
+    sgn_al = sign.(attr_influence)
     difs = (sgn_rl .* sgn_al) .< 0
     if any(difs)
-        links = lay1mul[difs] .+ al_weights[difs] .* gamma
+        links = lay1mul[difs] .+ attr_influence[difs]
         sgn_links = sign.(links)
 
         destab = (sgn_rl[difs] .* sgn_links) .< 0
@@ -445,6 +465,46 @@ function get_destabilized_links_count(rl_weights, al_weights, gamma)
         neg = 0
     end
     return (pos, neg)
+end
+export get_destabilized_links_count
+
+# returns counts of pos and neg links that are destabilized based only al_weights and gamma. 
+function get_destabilized_links_count(rl_weights, al_weights, gamma)
+    n = size(rl_weights, 1)
+    rl_sim = Symmetric(rl_weights)
+    lay1mul = rl_sim * rl_sim ./ (n - 2)
+    
+    return get_destabilized_links_count(lay1mul, al_weights .* gamma)
+end
+export get_destabilized_links_count
+
+# returns counts of pos and neg links 
+# that are destabilized based only al_weights and gamma
+# assuming the network topology is incomplete.
+# `rl_weights` and `al_weights` are vectors and not matrices. 
+function get_destabilized_links_count(rl_weights::Vector{Float64}, al_weights::Vector{Float64}, gamma::Float64, 
+    link_pairs::Vector, triad_cnt::Vector)
+    # n = size(rl_weights, 1)
+    # rl_sim = Symmetric(rl_weights)
+    # lay1mul = rl_sim * rl_sim ./ (n - 2)
+    lay1mul = map(y -> sum(map(z -> rl_weights[z[1]] * rl_weights[z[2]], y)), link_pairs) ./ triad_cnt
+
+    return get_destabilized_links_count(lay1mul, al_weights .* gamma)
+end
+export get_destabilized_links_count
+
+# returns counts of pos and neg links 
+# that are destabilized based only al_weights and gamma
+# assuming the network topology is incomplete. 
+# `rl_weights` and `al_weights` are matrices. 
+function get_destabilized_links_count(rl_weights::Matrix{Float64}, al_weights::Matrix{Float64}, gamma::Float64, 
+    triad_cnt)
+    # n = size(rl_weights, 1)
+    rl_sim = Symmetric(rl_weights)
+    lay1mul = rl_sim * rl_sim ./ triad_cnt
+    # lay1mul = map(y -> sum(map(z -> rl_weights[z[1]] * rl_weights[z[2]], y)), link_pairs) ./ triad_cnt
+
+    return get_destabilized_links_count(lay1mul, al_weights .* gamma)
 end
 export get_destabilized_links_count
 
