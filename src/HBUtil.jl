@@ -424,13 +424,17 @@ function init_random_balanced_relations(n, dist_to_1 = 0.01)
     return xy_attr
 end
 
-function init_balanced_relations(n, specified_division::Vector{Vector{Int64}}, dist_to_1 = 0.01)
+function init_balanced_relations(
+    n,
+    specified_division::Vector{Vector{Int64}},
+    dist_to_1 = 0.01,
+)
     groups = length(specified_division)
 
     art_attr = zeros(Int, n)
-    xy_attr = zeros(n,n)
-    
-    for g in 1:groups
+    xy_attr = zeros(n, n)
+
+    for g = 1:groups
         art_attr[specified_division[g]] .= g
     end
 
@@ -473,7 +477,7 @@ function get_destabilized_links_count(rl_weights, al_weights, gamma)
     n = size(rl_weights, 1)
     rl_sim = Symmetric(rl_weights)
     lay1mul = rl_sim * rl_sim ./ (n - 2)
-    
+
     return get_destabilized_links_count(lay1mul, al_weights .* gamma)
 end
 export get_destabilized_links_count
@@ -482,12 +486,19 @@ export get_destabilized_links_count
 # that are destabilized based only al_weights and gamma
 # assuming the network topology is incomplete.
 # `rl_weights` and `al_weights` are vectors and not matrices. 
-function get_destabilized_links_count(rl_weights::Vector{Float64}, al_weights::Vector{Float64}, gamma::Float64, 
-    link_pairs::Vector, triad_cnt::Vector)
+function get_destabilized_links_count(
+    rl_weights::Vector{Float64},
+    al_weights::Vector{Float64},
+    gamma::Float64,
+    link_pairs::Vector,
+    triad_cnt::Vector,
+)
     # n = size(rl_weights, 1)
     # rl_sim = Symmetric(rl_weights)
     # lay1mul = rl_sim * rl_sim ./ (n - 2)
-    lay1mul = map(y -> sum(map(z -> rl_weights[z[1]] * rl_weights[z[2]], y)), link_pairs) ./ triad_cnt
+    lay1mul =
+        map(y -> sum(map(z -> rl_weights[z[1]] * rl_weights[z[2]], y)), link_pairs) ./
+        triad_cnt
 
     return get_destabilized_links_count(lay1mul, al_weights .* gamma)
 end
@@ -497,8 +508,12 @@ export get_destabilized_links_count
 # that are destabilized based only al_weights and gamma
 # assuming the network topology is incomplete. 
 # `rl_weights` and `al_weights` are matrices. 
-function get_destabilized_links_count(rl_weights::Matrix{Float64}, al_weights::Matrix{Float64}, gamma::Float64, 
-    triad_cnt)
+function get_destabilized_links_count(
+    rl_weights::Matrix{Float64},
+    al_weights::Matrix{Float64},
+    gamma::Float64,
+    triad_cnt,
+)
     # n = size(rl_weights, 1)
     rl_sim = Symmetric(rl_weights)
     lay1mul = rl_sim * rl_sim ./ triad_cnt

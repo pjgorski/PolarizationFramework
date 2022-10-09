@@ -735,12 +735,12 @@ function using_heider_attr_destab(
             assumed_n = size(all_links_mat)[1]
         end
         @assert assumed_n == n "Wrong specified number of nodes `n` and given number of nodes in `graph` or `all_links_mat`."
-        
+
         if isempty(all_links_mat)
             all_links_mat = adjacency_matrix(graph)
             all_triads = get_triads(all_links_mat)
             all_links = get_links_in_triads(all_triads)
-            all_links_mat = get_adj_necessary_links(n, all_links; typ = Float64);
+            all_links_mat = get_adj_necessary_links(n, all_links; typ = Float64)
 
             kwargs = (kwargs..., all_triads = all_triads)
         end
@@ -749,7 +749,8 @@ function using_heider_attr_destab(
 
         if ode_fun_name == "Heider72!"
             if !haskey(kwargs_dict, :triads_count_mat)
-                triads_around_links_dict = get_triangles_around_links(kwargs_dict[:all_triads])
+                triads_around_links_dict =
+                    get_triangles_around_links(kwargs_dict[:all_triads])
                 all_links = get_links_in_triads(kwargs_dict[:all_triads])
                 counts = link_triangles_count(triads_around_links_dict; links = all_links)
                 triads_count_mat = link_triangles_mat_inv(n, all_links, counts)
@@ -758,13 +759,14 @@ function using_heider_attr_destab(
             end
         elseif ode_fun_name == "Heider9!"
             if !haskey(kwargs_dict, :link_indices)
-                link_indices = findall(triu(all_links_mat,1)[:] .> 0) 
+                link_indices = findall(triu(all_links_mat, 1)[:] .> 0)
 
                 kwargs = (kwargs..., link_indices = link_indices)
             end
 
             if !haskey(kwargs_dict, :link_pairs)
-                triads_around_links_dict = get_triangles_around_links(kwargs_dict[:all_triads])
+                triads_around_links_dict =
+                    get_triangles_around_links(kwargs_dict[:all_triads])
                 all_links = get_links_in_triads(kwargs_dict[:all_triads])
 
                 link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
@@ -773,8 +775,8 @@ function using_heider_attr_destab(
             end
 
             if !haskey(kwargs_dict, :link_pairs_triad_cnt)
-                link_pairs_triad_cnt = [length(link) for link in kwargs_dict[:link_pairs]];
-                
+                link_pairs_triad_cnt = [length(link) for link in kwargs_dict[:link_pairs]]
+
                 kwargs = (kwargs..., link_pairs_triad_cnt = link_pairs_triad_cnt)
             end
         end
@@ -847,11 +849,20 @@ function using_heider_attr_destab(
                 (pos_destab, neg_destab) =
                     get_destabilized_links_count(rl_weights, al_weights, gamma1)
             elseif ode_fun == Heider72!
-                (pos_destab, neg_destab) =
-                    get_destabilized_links_count(rl_weights, al_weights, gamma1, kwargs_dict[:triads_count_mat])
+                (pos_destab, neg_destab) = get_destabilized_links_count(
+                    rl_weights,
+                    al_weights,
+                    gamma1,
+                    kwargs_dict[:triads_count_mat],
+                )
             elseif ode_fun == Heider9!
-                (pos_destab, neg_destab) =
-                    get_destabilized_links_count(rl_weights, al_weights, gamma1, kwargs_dict[:link_pairs], kwargs_dict[:link_pairs_triad_cnt])
+                (pos_destab, neg_destab) = get_destabilized_links_count(
+                    rl_weights,
+                    al_weights,
+                    gamma1,
+                    kwargs_dict[:link_pairs],
+                    kwargs_dict[:link_pairs_triad_cnt],
+                )
             end
             links_destab_changed[1, :] .= pos_destab
             links_destab_changed[2, :] .= neg_destab
@@ -903,8 +914,10 @@ function using_heider_attr_destab(
                 global_polarization[rep] = ishb_sim_par
 
                 if u isa Vector
-                    links_destab_changed[3, rep] = sum(u[u0[kwargs_dict[:link_indices]].>0] .< 0) #number of initial pos links that changed to negative
-                    links_destab_changed[4, rep] = sum(u[u0[kwargs_dict[:link_indices]].<0] .> 0) #number of initial neg links that changed to positive
+                    links_destab_changed[3, rep] =
+                        sum(u[u0[kwargs_dict[:link_indices]].>0] .< 0) #number of initial pos links that changed to negative
+                    links_destab_changed[4, rep] =
+                        sum(u[u0[kwargs_dict[:link_indices]].<0] .> 0) #number of initial neg links that changed to positive
                 else
                     links_destab_changed[3, rep] = sum(u[u0.>0] .< 0) #number of initial pos links that changed to negative
                     links_destab_changed[4, rep] = sum(u[u0.<0] .> 0) #number of initial neg links that changed to positive
