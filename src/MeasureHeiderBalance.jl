@@ -736,6 +736,8 @@ function using_heider_attr_destab(
         end
         @assert assumed_n == n "Wrong specified number of nodes `n` and given number of nodes in `graph` or `all_links_mat`."
 
+        kwargs_dict = Dict(kwargs)
+
         if isempty(all_links_mat)
             all_links_mat = adjacency_matrix(graph)
             all_triads = get_triads(all_links_mat)
@@ -743,9 +745,15 @@ function using_heider_attr_destab(
             all_links_mat = get_adj_necessary_links(n, all_links; typ = Float64)
 
             kwargs = (kwargs..., all_triads = all_triads)
-        end
+            kwargs_dict = Dict(pairs(kwargs))
+            # kwargs_dict[:all_triads] = all_triads
+        elseif !haskey(kwargs_dict, :all_triads)
+            all_triads = get_triads(all_links_mat)
 
-        kwargs_dict = Dict(kwargs)
+            kwargs = (kwargs..., all_triads = all_triads)
+            # kwargs_dict[:all_triads] = all_triads
+            kwargs_dict = Dict(pairs(kwargs))
+        end
 
         if ode_fun_name == "Heider72!"
             if !haskey(kwargs_dict, :triads_count_mat)
@@ -756,12 +764,14 @@ function using_heider_attr_destab(
                 triads_count_mat = link_triangles_mat_inv(n, all_links, counts)
 
                 kwargs = (kwargs..., triads_count_mat = triads_count_mat)
+                kwargs_dict[:triads_count_mat] = triads_count_mat
             end
         elseif ode_fun_name == "Heider9!"
             if !haskey(kwargs_dict, :link_indices)
                 link_indices = findall(triu(all_links_mat, 1)[:] .> 0)
 
                 kwargs = (kwargs..., link_indices = link_indices)
+                kwargs_dict[:link_indices] = link_indices
             end
 
             if !haskey(kwargs_dict, :link_pairs)
@@ -772,12 +782,14 @@ function using_heider_attr_destab(
                 link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
 
                 kwargs = (kwargs..., link_pairs = link_pairs)
+                kwargs_dict[:link_pairs] = link_pairs
             end
 
             if !haskey(kwargs_dict, :link_pairs_triad_cnt)
                 link_pairs_triad_cnt = [length(link) for link in kwargs_dict[:link_pairs]]
 
                 kwargs = (kwargs..., link_pairs_triad_cnt = link_pairs_triad_cnt)
+                kwargs_dict[:link_pairs_triad_cnt] = link_pairs_triad_cnt
             end
         end
 
@@ -857,8 +869,8 @@ function using_heider_attr_destab(
                 )
             elseif ode_fun == Heider9!
                 (pos_destab, neg_destab) = get_destabilized_links_count(
-                    rl_weights,
-                    al_weights,
+                    rl_weights[kwargs_dict[:link_indices]],
+                    al_weights[kwargs_dict[:link_indices]],
                     gamma1,
                     kwargs_dict[:link_pairs],
                     kwargs_dict[:link_pairs_triad_cnt],

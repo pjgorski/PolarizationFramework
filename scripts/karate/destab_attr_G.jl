@@ -7,9 +7,13 @@ using PolarizationFramework
 using Graphs
 
 gr = KarateGraph()
+
+specified_division = [[3, 14, 20, 2, 1, 4, 8, 18, 22, 12, 13, 5, 11, 6, 7, 17],
+       [21, 30, 19, 24, 16, 27, 15, 23, 33, 34, 28, 29, 32, 26, 25, 31, 10, 9]]
+
 ns = [nv(gr)]
 # ns = [5, 9]#[9,15,25]
-reps = [100]
+reps = [10]
 reps_dict = Dict(zip(ns, reps))
 gs = [1:2:21..., 25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 
@@ -64,6 +68,7 @@ for params in dicts
         files_folder = ["data", "karate-sims"],
         filename_prefix = "DesKarG",
         graph = gr,
+        specified_division = specified_division,
     )
 
 end
