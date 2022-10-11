@@ -184,11 +184,7 @@ function calc_heider_attr(
                 hlp = x_sim,
             )
 
-            sim = get_similarity2(
-                end_signs,
-                xy_attr[link_indices],
-                length(end_signs),
-            )
+            sim = get_similarity2(end_signs, xy_attr[link_indices], length(end_signs))
             hb_in_attrs =
                 get_balanced_ratio_not_complete(
                     sign.(xy_attr[link_indices]),
@@ -891,14 +887,15 @@ function using_heider_attr_destab(
                     Deltas[:, rep] = get_triad_counts(rl_weights, n)
                     x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n)
                 else
-                    HB_attr[rep] = 
+                    HB_attr[rep] =
                         get_balanced_ratio_not_complete(
                             sign.(al_weights .* all_links_mat),
-                            length(kwargs_dict[:all_triads])
+                            length(kwargs_dict[:all_triads]),
                         ) == 1
 
                     Deltas[:, rep] = get_triad_counts(rl_weights, kwargs_dict[:all_triads])
-                    x_attr_sim[rep] = get_similarity2(rl_weights, al_weights, sum(sign.(rl_weights) .> 0))
+                    x_attr_sim[rep] =
+                        get_similarity2(rl_weights, al_weights, sum(sign.(rl_weights) .> 0))
                 end
                 local_polarization[rep] = get_local_polarization(Deltas[:, rep])
                 global_polarization[rep] = 1 - paradise[rep]
