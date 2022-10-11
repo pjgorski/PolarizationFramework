@@ -187,7 +187,7 @@ function calc_heider_attr(
             sim = get_similarity2(
                 end_signs,
                 xy_attr[link_indices],
-                sum(sign.(end_signs) .> 0) / 2,
+                length(end_signs),
             )
             hb_in_attrs =
                 get_balanced_ratio_not_complete(
@@ -204,7 +204,7 @@ function calc_heider_attr(
                 length(all_triads);
                 hlp = x_sim,
             )
-            sim = get_similarity2(end_signs, xy_attr, sum(sign.(end_signs) .> 0) / 2)
+            sim = get_similarity2(end_signs, xy_attr, sum(sign.(end_signs) .> 0))
 
             hb_in_attrs =
                 get_balanced_ratio_not_complete(
@@ -882,16 +882,28 @@ function using_heider_attr_destab(
                 HB[rep] = 1
                 HB_x[rep] = 1
                 BR[rep] = 1
-                HB_attr[rep] = is_hb(al_weights, n)
-                # HB_only_weights = zeros(zmax);
+
                 paradise[rep] = is_paradise(rl_weights, n)
                 hell[rep] = 0
-                Deltas[:, rep] = get_triad_counts(rl_weights, n)
+                if isempty(all_links_mat)
+                    HB_attr[rep] = is_hb(al_weights, n)
+                    # HB_only_weights = zeros(zmax);
+                    Deltas[:, rep] = get_triad_counts(rl_weights, n)
+                    x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n)
+                else
+                    HB_attr[rep] = 
+                        get_balanced_ratio_not_complete(
+                            sign.(al_weights .* all_links_mat),
+                            length(kwargs_dict[:all_triads])
+                        ) == 1
+
+                    Deltas[:, rep] = get_triad_counts(rl_weights, kwargs_dict[:all_triads])
+                    x_attr_sim[rep] = get_similarity2(rl_weights, al_weights, sum(sign.(rl_weights) .> 0))
+                end
                 local_polarization[rep] = get_local_polarization(Deltas[:, rep])
                 global_polarization[rep] = 1 - paradise[rep]
                 weak_balance_in_complete_graph[rep] = 1
 
-                x_attr_sim[rep] = get_similarity(rl_weights, al_weights, n)
                 stab[rep] = 1
                 times[rep] = 0
 
