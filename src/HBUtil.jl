@@ -52,6 +52,18 @@ function Heider72!(dx, x, p, t)
 end
 export Heider72!
 
+#same as Heider72! but does not let x to get closer to ±1 than eps_tol = 1e-9
+function Heider722!(dx, x, p, t)
+    n, gamma_attr, lay1mul, x_sim, mask, triad_cnt, x_true = p
+    lay1mul .= abs.(x)
+    x_true .= lay1mul .> 1. - 1e-9
+    x[x_true] .= sign.(x[x_true]) .* (1. - 1e-9)
+    Sym!(x_sim, x, n)
+    mul!(lay1mul, x_sim, x_sim)
+    dx .= (x_sim .^ 2 .- 1) .* (lay1mul .* triad_cnt .+ gamma_attr) .* (-1) .* mask
+end
+export Heider722!
+
 # experimental, possibly faster than Heider72!
 # gamma_attr should be multiplied by number of triads beforehand
 # possibly this idea is wrong
@@ -71,6 +83,20 @@ function Heider9!(dx, x, p, t)
     dx .= (x .^ 2 .- 1) .* (lay1mul ./ triad_cnt .+ gamma_attr) .* (-1)
 end
 export Heider9!
+
+# same as Heider9! but as Heider72! but does not let x to get closer to ±1 than eps_tol = 1e-9
+function Heider92!(dx, x, p, t)
+    gamma_attr, lay1mul, link_pairs, triad_cnt, x_true = p
+
+    lay1mul .= abs.(x)
+    x_true .= lay1mul .> 1. - 1e-9
+    x[x_true] .= sign.(x[x_true]) .* (1. - 1e-9)
+
+    lay1mul .= map(y -> sum(map(z -> x[z[1]] * x[z[2]], y)), link_pairs)
+
+    dx .= (x .^ 2 .- 1) .* (lay1mul ./ triad_cnt .+ gamma_attr) .* (-1)
+end
+export Heider92!
 
 # Following function is the same as `Heider5!`, used for speed comparison purposes. 
 function Heider8!(dx, x, p, t)

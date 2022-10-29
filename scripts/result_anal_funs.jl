@@ -6,11 +6,24 @@ using DataFrames
 # Columns to be averaged with or without calculating std are given in `to_mean_with_std` or `to_mean_without_std`.
 # Columns not to be touched are given in `not_touch`.
 # Function tries to obtain some of the above itself. 
-function aggregate_data(df::DataFrame; 
-    agg_col = ["G", "attr_name", "attr_degeneracy", "gamma"], counter_col = "zmax", to_add = [], 
-    to_mean_with_std = [], to_mean_without_std = [], not_touch = [])
+function aggregate_data(
+    df::DataFrame;
+    agg_col = ["G", "attr_name", "attr_degeneracy", "gamma"],
+    counter_col = "zmax",
+    to_add = [],
+    to_mean_with_std = [],
+    to_mean_without_std = [],
+    not_touch = [],
+)
 
-    all_known_cols = [agg_col..., counter_col, to_add..., to_mean_with_std..., to_mean_without_std..., not_touch...]
+    all_known_cols = [
+        agg_col...,
+        counter_col,
+        to_add...,
+        to_mean_with_std...,
+        to_mean_without_std...,
+        not_touch...,
+    ]
 
     for name in names(df)
         if name in all_known_cols

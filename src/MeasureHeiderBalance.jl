@@ -79,7 +79,7 @@ function calc_heider_attr(
             link_pairs_triad_cnt = link_pairs_triad_cnt,
         )
 
-        if ode_fun == Heider9!
+        if ode_fun in [Heider9!, Heider92!]
             link_indices = mask
             mask = ones(size(link_indices))
             # mask .*= all_links_mat
@@ -126,8 +126,11 @@ function calc_heider_attr(
         x_sim = zeros(n, n)
 
         p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
-        if ode_fun == Heider72!
+        if ode_fun in [Heider72!, Heider722!]
             p = (p..., triads_count_mat)
+            if ode_fun == Heider722!
+                p = (p..., zeros(Bool, n,n))
+            end
         elseif ode_fun == Heider73!
             p[2] .*= triads_count_mat
         end
@@ -287,21 +290,21 @@ function initialize_calc_heider_attr_incomplete(
     end
 
 
-    if ode_fun in [Heider72!, Heider73!]
+    if ode_fun in [Heider72!, Heider722!, Heider73!]
         if isempty(triads_count_mat)
             all_links = get_links_in_triads(all_triads)
 
             triads_around_links_dict = get_triangles_around_links(all_triads)
             counts = link_triangles_count(triads_around_links_dict; links = all_links)
 
-            if ode_fun in [Heider72!]
+            if ode_fun in [Heider72!, Heider722!]
                 triads_count_mat = link_triangles_mat_inv(n, all_links, counts)
             elseif ode_fun == Heider73!
                 triads_count_mat = link_triangles_mat(n, all_links, counts)
             end
         end
     end
-    if ode_fun == Heider9!
+    if ode_fun in [Heider9!, Heider92!]
         if isempty(link_indices)
             link_indices = findall(triu(all_links_mat, 1)[:] .> 0)
         end
@@ -345,12 +348,12 @@ function initialize_calc_heider_attr_incomplete(
     u0 .*= mask
     xy_attr .*= mask
 
-    if ode_fun == Heider9!
+    if ode_fun in [Heider9!, Heider92!]
         u0_inc = u0[link_indices]
         xy_attr_inc = xy_attr[link_indices]
     end
 
-    if ode_fun == Heider9!
+    if ode_fun in [Heider9!, Heider92!]
         condition_here = (u, t, integrator) -> condition2(u, t, integrator, 1:nl)
     else
         condition_here = (u, t, integrator) -> condition2(u, t, integrator, mask)
@@ -362,25 +365,32 @@ function initialize_calc_heider_attr_incomplete(
     #ode and model parameters
     tspan = (0.0, maxtime)
 
-    if ode_fun == Heider9!
+    if ode_fun in [Heider9!, Heider92!]
         lay1mul = zeros(nl)
 
         p = (gamma .* xy_attr_inc, lay1mul, link_pairs, link_pairs_triad_cnt)
+
+        if ode_fun in [Heider92!]
+            p = (p..., zeros(Bool, nl))
+        end
     else
 
         lay1mul = zeros(n, n)
         x_sim = zeros(n, n)
 
         p = (n, gamma .* xy_attr, lay1mul, x_sim, mask)
-        if ode_fun == Heider72!
+        if ode_fun in [Heider72!, Heider722!]
             p = (p..., triads_count_mat)
+            if ode_fun == Heider722!
+                p = (p..., zeros(Bool, n,n))
+            end
         elseif ode_fun == Heider73!
             p[2] .*= triads_count_mat
         end
     end
 
     #solving
-    if ode_fun == Heider9!
+    if ode_fun in [Heider9!, Heider92!]
         prob = ODEProblem(ode_fun, u0_inc, tspan, p)
         return prob,
         cb,
@@ -751,7 +761,7 @@ function using_heider_attr_destab(
             kwargs_dict = Dict(pairs(kwargs))
         end
 
-        if ode_fun_name == "Heider72!"
+        if ode_fun_name in ["Heider72!", "Heider722!"] 
             if !haskey(kwargs_dict, :triads_count_mat)
                 triads_around_links_dict =
                     get_triangles_around_links(kwargs_dict[:all_triads])
@@ -762,7 +772,7 @@ function using_heider_attr_destab(
                 kwargs = (kwargs..., triads_count_mat = triads_count_mat)
                 kwargs_dict[:triads_count_mat] = triads_count_mat
             end
-        elseif ode_fun_name == "Heider9!"
+        elseif ode_fun_name in ["Heider9!", "Heider92!"]
             if !haskey(kwargs_dict, :link_indices)
                 link_indices = findall(triu(all_links_mat, 1)[:] .> 0)
 
@@ -856,14 +866,14 @@ function using_heider_attr_destab(
             if isempty(all_links_mat)
                 (pos_destab, neg_destab) =
                     get_destabilized_links_count(rl_weights, al_weights, gamma1)
-            elseif ode_fun == Heider72!
+            elseif ode_fun in [Heider72!, Heider722!]
                 (pos_destab, neg_destab) = get_destabilized_links_count(
                     rl_weights,
                     al_weights,
                     gamma1,
                     kwargs_dict[:triads_count_mat],
                 )
-            elseif ode_fun == Heider9!
+            elseif ode_fun in [Heider9!, Heider92!]
                 (pos_destab, neg_destab) = get_destabilized_links_count(
                     rl_weights[kwargs_dict[:link_indices]],
                     al_weights[kwargs_dict[:link_indices]],
