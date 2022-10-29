@@ -129,7 +129,7 @@ function calc_heider_attr(
         if ode_fun in [Heider72!, Heider722!]
             p = (p..., triads_count_mat)
             if ode_fun == Heider722!
-                p = (p..., zeros(Bool, n,n))
+                p = (p..., zeros(Bool, n, n))
             end
         elseif ode_fun == Heider73!
             p[2] .*= triads_count_mat
@@ -382,7 +382,7 @@ function initialize_calc_heider_attr_incomplete(
         if ode_fun in [Heider72!, Heider722!]
             p = (p..., triads_count_mat)
             if ode_fun == Heider722!
-                p = (p..., zeros(Bool, n,n))
+                p = (p..., zeros(Bool, n, n))
             end
         elseif ode_fun == Heider73!
             p[2] .*= triads_count_mat
@@ -761,7 +761,7 @@ function using_heider_attr_destab(
             kwargs_dict = Dict(pairs(kwargs))
         end
 
-        if ode_fun_name in ["Heider72!", "Heider722!"] 
+        if ode_fun_name in ["Heider72!", "Heider722!"]
             if !haskey(kwargs_dict, :triads_count_mat)
                 triads_around_links_dict =
                     get_triangles_around_links(kwargs_dict[:all_triads])

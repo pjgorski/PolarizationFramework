@@ -56,8 +56,8 @@ export Heider72!
 function Heider722!(dx, x, p, t)
     n, gamma_attr, lay1mul, x_sim, mask, triad_cnt, x_true = p
     lay1mul .= abs.(x)
-    x_true .= lay1mul .> 1. - 1e-9
-    x[x_true] .= sign.(x[x_true]) .* (1. - 1e-9)
+    x_true .= lay1mul .> 1.0 - 1e-9
+    x[x_true] .= sign.(x[x_true]) .* (1.0 - 1e-9)
     Sym!(x_sim, x, n)
     mul!(lay1mul, x_sim, x_sim)
     dx .= (x_sim .^ 2 .- 1) .* (lay1mul .* triad_cnt .+ gamma_attr) .* (-1) .* mask
@@ -89,8 +89,8 @@ function Heider92!(dx, x, p, t)
     gamma_attr, lay1mul, link_pairs, triad_cnt, x_true = p
 
     lay1mul .= abs.(x)
-    x_true .= lay1mul .> 1. - 1e-9
-    x[x_true] .= sign.(x[x_true]) .* (1. - 1e-9)
+    x_true .= lay1mul .> 1.0 - 1e-9
+    x[x_true] .= sign.(x[x_true]) .* (1.0 - 1e-9)
 
     lay1mul .= map(y -> sum(map(z -> x[z[1]] * x[z[2]], y)), link_pairs)
 

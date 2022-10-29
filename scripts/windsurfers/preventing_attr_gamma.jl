@@ -5,13 +5,15 @@ using DrWatson
 quickactivate(@__DIR__)
 
 using PolarizationFramework
-using Graphs
+using Graphs, GraphIO
 using LinearAlgebra
 
 # ns = [5, 9]#[9,15,25]
-gr = KarateGraph()
+file = datadir("windsurfers-interactions", "out.moreno_beach_beach")
+gr = loadgraph(file, "graph_key", NETFormat())
+
 ns = [nv(gr)]
-A = adjacency_matrix(KarateGraph())
+A = adjacency_matrix(gr)
 all_triads = get_triads(A)
 all_links = get_links_in_triads(all_triads)
 A = get_adj_necessary_links(size(A)[1], all_links; typ = Float64);
