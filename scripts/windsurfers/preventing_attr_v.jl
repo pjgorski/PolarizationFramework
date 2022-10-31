@@ -50,7 +50,11 @@ for params in dicts
         ns, gs, attr_types, vs, reps
     end
 
-    println("Started Windsurfers graph sims with g=$g and attr_type=", attr_type, " and v=$v.")
+    println(
+        "Started Windsurfers graph sims with g=$g and attr_type=",
+        attr_type,
+        " and v=$v.",
+    )
     if attr_type == "UA"
         attr = UnorderedAttributes(g, threshold, v)
     elseif attr_type == "BA"

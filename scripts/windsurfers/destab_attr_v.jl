@@ -4,13 +4,42 @@ using DrWatson
 quickactivate(@__DIR__)
 
 using PolarizationFramework
-using Graphs
+using Graphs, GraphIO
+using LinearAlgebra
 
-gr = KarateGraph()
+# ns = [5, 9]#[9,15,25]
+# file = datadir("windsurfers-interactions", "out.moreno_beach_beach")
+file2 = datadir("windsurfers-interactions", "r-windsurfers-interactions.paj")
+gr = loadgraph(file2, "graph_key", NETFormat())
 
 specified_division = [
-    [3, 14, 20, 2, 1, 4, 8, 18, 22, 12, 13, 5, 11, 6, 7, 17],
-    [21, 30, 19, 24, 16, 27, 15, 23, 33, 34, 28, 29, 32, 26, 25, 31, 10, 9],
+    [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        11,
+        14,
+        15,
+        16,
+        17,
+        20,
+        21,
+        26,
+        30,
+        31,
+        32,
+        37,
+        38,
+        39,
+        41,
+        43,
+    ],
+    [9, 10, 12, 13, 18, 19, 22, 23, 24, 25, 27, 28, 29, 33, 34, 35, 36, 40, 42],
 ]
 
 ns = [nv(gr)]
@@ -36,7 +65,7 @@ for params in dicts
         @unpack ns, threshold, reps, gs, attr_types, vs = params
         ns, gs, attr_types, vs, reps
     end
-    println("Started ", @ntuple(g, attr_type, v))
+    println("Started windsurfers-interactions", @ntuple(g, attr_type, v))
 
     if attr_type == "UA"
         attr = UnorderedAttributes(g, threshold, v)
@@ -58,11 +87,11 @@ for params in dicts
         -1,
         rep,
         3000.0,
-        "Heider9!",
+        "Heider92!",
         disp_each = 0,
         disp_more_every = 600,
         save_each = 600,
-        files_folder = ["data", "karate-sims"],
+        files_folder = ["data", "windsurfers-interactions-sims"],
         filename_prefix = "DesKarv",
         graph = gr,
         specified_division = specified_division,
