@@ -1,5 +1,4 @@
-# Windsurfer interactions dataset topology
-# Preventing polarization from forming as a function of number of attributes. 
+# Destabilizing polarization as a function of number of attributes. 
 # Figure 1
 using DrWatson
 quickactivate(@__DIR__)
@@ -9,35 +8,34 @@ using Graphs, GraphIO
 using LinearAlgebra
 
 # ns = [5, 9]#[9,15,25]
-file = datadir("windsurfers-interactions", "out.moreno_beach_beach")
+# file = datadir("windsurfers-interactions", "out.moreno_beach_beach")
 file2 = datadir("windsurfers-interactions", "r-windsurfers-interactions.paj")
-gr = loadgraph(file, "graph_key", NETFormat())
+gr = loadgraph(file2, "graph_key", NETFormat())
+
+specified_division = [
+    [1, 2, 3, 4, 5, 6, 7, 8,11, 14, 15, 16, 17, 20, 21, 26, 30, 31, 32, 37, 38, 39, 41, 43],
+    [9, 10, 12, 13, 18, 19, 22, 23, 24, 25, 27, 28, 29, 33, 34, 35, 36, 40, 42],
+]
 
 ns = [nv(gr)]
-A = adjacency_matrix(gr)
-all_triads = get_triads(A)
-all_links = get_links_in_triads(all_triads)
-A = get_adj_necessary_links(size(A)[1], all_links; typ = Float64);
-
-# Heider9!
-link_indices = findall(triu(A, 1)[:] .> 0)
-triads_around_links_dict = get_triangles_around_links(all_triads)
-link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
-link_pairs_triad_cnt = [length(link) for link in link_pairs];
-
+# ns = [5, 9]#[9,15,25]
 reps = [100]
 reps_dict = Dict(zip(ns, reps))
-# two parts of simulations
 gs = [1:2:21...]
 # gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
 attr_types = ["BA", "UA", "OA", "UPA"]
-# attr_types = ["BA", "OA", "UPA"]
-# attr_types = ["OA"]
 
-gammas = [0.5, 1.5, 4]
+
+# sg = [-1.5, -1.1, -1.01, -0.99, -0.5, -0.1, -0.01]
+# gammas=sort([sg..., 0, (-sg)...]);
+# gammas = [2, 2.5, 3, 3.5]
+gammas = [0.5, 1.5, 2, 2.5, 3, 3.5, 4, 6]
+# gammas = [0.5]
+# gammas = [6]
 
 all_params = @strdict(ns, gs, threshold, vs, attr_types)
 dicts = dict_list(all_params)
@@ -49,8 +47,7 @@ for params in dicts
         @unpack ns, threshold, reps, gs, attr_types, vs = params
         ns, gs, attr_types, vs, reps
     end
-
-    println("Started n=$n and g=$g and attr_type=", attr_type, " and v=$v.")
+    println("Started windsurfers-interactions ", @ntuple(g, attr_type, v))
 
     if attr_type == "UA"
         attr = UnorderedAttributes(g, threshold, v)
@@ -64,10 +61,11 @@ for params in dicts
         throw(attr_type)
     end
 
-    r = using_heider_attr(
+    r = using_heider_attr_destab(
         n,
         attr,
         gammas,
+        -1,
         rep,
         3000.0,
         "Heider92!";
@@ -75,11 +73,9 @@ for params in dicts
         disp_more_every = 600,
         save_each = 600,
         files_folder = ["data", "windsurfers-interactions-sims"],
-        filename_prefix = "NumKarG",
-        all_links_mat = A,
-        all_triads = all_triads,
-        link_indices = link_indices,
-        link_pairs = link_pairs,
-        link_pairs_triad_cnt = link_pairs_triad_cnt,
+        filename_prefix = "DesKarG",
+        graph = gr,
+        specified_division = specified_division,
     )
+
 end
