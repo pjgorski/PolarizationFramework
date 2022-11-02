@@ -1,14 +1,12 @@
 # Highschool13 2BIO1 topology
-# Preventing polarization from forming as a function of number of attributes. 
+# Destabilizing polarization as a function of number of attributes. 
 # Figure 1
 using DrWatson
 quickactivate(@__DIR__)
 
 using PolarizationFramework
 using Graphs
-using LinearAlgebra
 
-# ns = [5, 9]#[9,15,25]
 file = datadir("highschool13", "Highschool13-class2BIO1.lg")
 gr = loadgraph(file)
 ns = [nv(gr)]
@@ -27,30 +25,35 @@ triads_count_mat = PolarizationFramework.link_triangles_mat_inv(ns[1], all_links
 
 reps = [100]
 reps_dict = Dict(zip(ns, reps))
-# two parts of simulations
 gs = [1:2:21...]
-gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+# gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
 attr_types = ["BA", "UA", "OA", "UPA"]
-# attr_types = ["BA", "OA", "UPA"]
-# attr_types = ["OA"]
 
-gammas = [0.5, 1.5, 4]
 
-all_params = @strdict(ns, gs, threshold, vs, attr_types)
+# sg = [-1.5, -1.1, -1.01, -0.99, -0.5, -0.1, -0.01]
+# gammas=sort([sg..., 0, (-sg)...]);
+# gammas = [2, 2.5, 3, 3.5]
+gammas = [0.5, 1.5, 2, 2.5, 3, 3.5, 4, 6]
+# gammas = [0.5]
+# gammas = [6]
+
+larger_sizes = [@onlyif(i <= "ns" < 2 * i, i) for i = 1:maximum(ns)]
+
+all_params = @strdict(ns, gs, threshold, vs, attr_types, larger_sizes)
 dicts = dict_list(all_params)
 [d["reps"] = reps_dict[d["ns"]] for d in dicts] #adding reps
 # [d["gammas"] = gammas for d in dicts] #adding gammas
 
 for params in dicts
-    n, g, attr_type, v, rep = let
-        @unpack ns, threshold, reps, gs, attr_types, vs = params
-        ns, gs, attr_types, vs, reps
+    n, g, attr_type, v, rep, larger_size = let
+        @unpack ns, threshold, reps, gs, attr_types, vs, larger_sizes = params
+        ns, gs, attr_types, vs, reps, larger_sizes
     end
-
-    println("Started H13 n=$n and g=$g and attr_type=", attr_type, " and v=$v.")
+    println("Started ", @ntuple(n, g, attr_type, v, larger_size))
 
     if attr_type == "UA"
         attr = UnorderedAttributes(g, threshold, v)
@@ -64,10 +67,11 @@ for params in dicts
         throw(attr_type)
     end
 
-    r = using_heider_attr(
+    r = using_heider_attr_destab(
         n,
         attr,
         gammas,
+        larger_size,
         rep,
         3000.0,
         "Heider722!";
@@ -75,9 +79,10 @@ for params in dicts
         disp_more_every = 600,
         save_each = 600,
         files_folder = ["data", "highschool13-sims"],
-        filename_prefix = "NumKarG",
+        filename_prefix = "DesKarG",
         all_links_mat = A,
         all_triads = all_triads,
         triads_count_mat = triads_count_mat,
     )
+
 end
