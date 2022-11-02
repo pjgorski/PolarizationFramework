@@ -23,7 +23,7 @@ all_triads = get_triads(A);
 all_links = get_links_in_triads(all_triads)
 triads_around_links_dict = get_triangles_around_links(all_triads)
 counts = link_triangles_count(triads_around_links_dict; links = all_links)
-triads_count_mat = PolarizationFramework.link_triangles_mat_inv(n, all_links, counts)
+triads_count_mat = link_triangles_mat_inv(ns[1], all_links, counts)
 
 reps = [100]
 reps_dict = Dict(zip(ns, reps))
@@ -78,6 +78,6 @@ for params in dicts
         filename_prefix = "NumKarG",
         all_links_mat = A,
         all_triads = all_triads,
-        triads_count_mat = triads_count_mat
+        triads_count_mat = triads_count_mat,
     )
 end

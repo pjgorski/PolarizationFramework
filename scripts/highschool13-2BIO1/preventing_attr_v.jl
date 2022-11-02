@@ -10,18 +10,21 @@ using Graphs
 using LinearAlgebra
 
 # ns = [5, 9]#[9,15,25]
-gr = KarateGraph()
+file = datadir("highschool13", "Highschool13-class2BIO1.lg")
+gr = loadgraph(file)
 ns = [nv(gr)]
-A = adjacency_matrix(KarateGraph())
+A = adjacency_matrix(gr)
 all_triads = get_triads(A)
 all_links = get_links_in_triads(all_triads)
 A = get_adj_necessary_links(size(A)[1], all_links; typ = Float64);
 
-# Heider9!
-link_indices = findall(triu(A, 1)[:] .> 0)
+all_triads = get_triads(A);
+
+#Heider72!
+all_links = get_links_in_triads(all_triads)
 triads_around_links_dict = get_triangles_around_links(all_triads)
-link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
-link_pairs_triad_cnt = [length(link) for link in link_pairs];
+counts = link_triangles_count(triads_around_links_dict; links = all_links)
+triads_count_mat = PolarizationFramework.link_triangles_mat_inv(ns[1], all_links, counts)
 
 reps = [100]
 reps_dict = Dict(zip(ns, reps))
@@ -66,16 +69,14 @@ for params in dicts
         gammas,
         rep,
         3000.0,
-        "Heider9!";
+        "Heider722!";
         disp_each = 0,
         disp_more_every = 600,
         save_each = 600,
-        files_folder = ["data", "karate-sims"],
-        filename_prefix = "NumKarv",
+        files_folder = ["data", "highschool13-sims"],
+        filename_prefix = "NumKarG",
         all_links_mat = A,
         all_triads = all_triads,
-        link_indices = link_indices,
-        link_pairs = link_pairs,
-        link_pairs_triad_cnt = link_pairs_triad_cnt,
+        triads_count_mat = triads_count_mat,
     )
 end
