@@ -872,9 +872,12 @@ function using_heider_attr_destab(
 
     if ~isempty(all_links_mat) && ~isempty(specified_division)
         rl_weights = init_balanced_relations(n, specified_division)
-        rl_weights .*= all_links_mat
     else
         rl_weights = init_random_balanced_relations(n, larger_size)
+    end
+
+    if ~isempty(all_links_mat)
+        rl_weights .*= all_links_mat
     end
 
     r, filename = initialize_file(

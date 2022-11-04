@@ -542,7 +542,7 @@ function get_destabilized_links_count(
 )
     # n = size(rl_weights, 1)
     rl_sim = Symmetric(rl_weights)
-    lay1mul = rl_sim * rl_sim ./ triad_cnt
+    lay1mul = rl_sim * rl_sim .* triad_cnt
     # lay1mul = map(y -> sum(map(z -> rl_weights[z[1]] * rl_weights[z[2]], y)), link_pairs) ./ triad_cnt
 
     return get_destabilized_links_count(lay1mul, al_weights .* gamma)
