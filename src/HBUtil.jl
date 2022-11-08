@@ -435,6 +435,17 @@ function init_random_balanced_relations(n, larger_size::Int, dist_to_1 = 0.01)
 end
 export init_random_balanced_relations
 
+function init_random_balanced_relations!(xy_attr, n, larger_size::Int, dist_to_1 = 0.01; art_attr = [])
+    # larger_size = Int(ceil(rand(n/2:n)))
+    if isempty(art_attr)
+        art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
+    end
+
+    xy_attr .= triu(art_attr * art_attr', 1)
+
+    xy_attr .*= (1 - dist_to_1)
+end
+
 # generates a balanced RL network with random size of larger group
 # n - total number of nodes
 # larger_size - size of the larger group

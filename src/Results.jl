@@ -18,6 +18,7 @@ struct Result
     gammas::Array{Float64,1} #gammas
     maxtime::Float64 #simulation stopping time
     ode_fun_name::String #used ode_function
+    larger_size::Int # This is -1 in the case this parameter is not important (Scenario B) or it shows the size of larger group in the case of destabilization (Scenario A)
 
     attr_name::String #atribute type
     attr_threshold::Float64 #threshold (if any)
@@ -57,7 +58,7 @@ struct Result
 
     data::Array{Float64,2} #all data listed in an array
     interpretation::Array{String,1} #interpretation of columns of above field
-    # interpretation = ["N", "G", "gamma", "HB_in_attr",
+    # interpretation = ["N", "G", "gamma", "HB_in_attr", "larger_size", 
     # "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
     # "sim", "sim_std",
     # "x_attr_sim", "x_attr_sim_std",
@@ -73,7 +74,7 @@ struct Result
     # Previously (above) data was separated into AL-balanced and AL-unbalanced cases. Below it is not. 
     data2::Array{Any,2} #all data listed in an array
     interpretation2::Array{String,1} #interpretation of columns of above field
-    # interpretation = ["N", "G", "gamma", "maxtime", "ode_fun_name", 
+    # interpretation = ["N", "G", "gamma", "maxtime", "ode_fun_name", "larger_size", 
     # "attr", "attr_name", "attr_threshold",  "attr_degeneracy", 
     # "zmax", "HB", "HB_x", "paradise", "hell", "weak_balance_in_complete_graph",
     # "sim", "sim_std",
@@ -95,6 +96,7 @@ function Result(
     gammas::Vector{Float64},
     maxtime::Float64,
     ode_fun_name::String,
+    larger_size::Int = -1,
 )
     nb = length(gammas)
 
@@ -134,6 +136,7 @@ function Result(
         "G",
         "gamma",
         "HB_in_attr",
+        "larger_size",
         "zmax",
         "HB",
         "HB_x",
@@ -179,6 +182,7 @@ function Result(
         "gamma",
         "maxtime",
         "ode_fun_name",
+        "larger_size",
         "attr_name",
         "attr_threshold",
         "attr_degeneracy",
@@ -221,7 +225,8 @@ function Result(
     ]
     data2 = Array{Any,2}(undef, nb, length(interpretation2))
     data2[:, 1:4] .= 0
-    data2[:, 5:6] .= ""
+    data2[:, [5,7]] .= ""
+    data2[:, 6] .= 0
     data2[:, 7:end] .= 0
 
     Result(
@@ -230,6 +235,7 @@ function Result(
         gammas,
         maxtime,
         ode_fun_name,
+        larger_size,
         get_name(attr),
         get_threshold(attr),
         get_degeneracy(attr),
@@ -273,8 +279,9 @@ function Result(
     gammas::Vector{Float64},
     maxtime::Float64,
     ode_fun_name::String,
+    larger_size::Int = -1,
 )
-    Result(n, BinaryAttributes(g), gammas, maxtime, ode_fun_name)
+    Result(n, BinaryAttributes(g), gammas, maxtime, ode_fun_name, larger_size)
 end
 export Result
 
@@ -411,6 +418,7 @@ function update_result!(res::Result, fields)
         res.g,
         res.gammas[i],
         true,
+        res.larger_size,
         smt,
         sum(HB[mask_true]) / smt,
         sum(HB_x[mask_true]) / smt,
@@ -463,6 +471,7 @@ function update_result!(res::Result, fields)
         res.g,
         res.gammas[i],
         false,
+        res.larger_size,
         smf,
         sum(HB[mask_false]) / smf,
         sum(HB_x[mask_false]) / smf,
@@ -509,6 +518,7 @@ function update_result!(res::Result, fields)
         res.gammas[i],
         res.maxtime,
         res.ode_fun_name,
+        res.larger_size,
         res.attr_name,
         res.attr_threshold,
         res.attr_degeneracy,
