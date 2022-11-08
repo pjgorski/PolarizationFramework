@@ -225,7 +225,7 @@ function Result(
     ]
     data2 = Array{Any,2}(undef, nb, length(interpretation2))
     data2[:, 1:4] .= 0
-    data2[:, [5,7]] .= ""
+    data2[:, [5, 7]] .= ""
     data2[:, 6] .= 0
     data2[:, 7:end] .= 0
 

@@ -936,7 +936,12 @@ function using_heider_attr_destab(
 
         for rep = 1:zmax
             if !isempty(all_links_mat) && isempty(specified_division) # if this is true,then in each rep new division should be generated. 
-                init_random_balanced_relations!(rl_weights, n, larger_size; art_attr = art_attr)
+                init_random_balanced_relations!(
+                    rl_weights,
+                    n,
+                    larger_size;
+                    art_attr = art_attr,
+                )
                 rl_weights .*= all_links_mat
 
                 initial_neg_links_count[zmax] = sum(rl_weights .< 0)
