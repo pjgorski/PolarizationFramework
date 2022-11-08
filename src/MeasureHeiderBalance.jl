@@ -901,6 +901,8 @@ function using_heider_attr_destab(
 
     firstline = 1
     realization_counter = 0
+
+    art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
     for i = 1:length(gammas)
         gamma1 = gammas[i]
 
@@ -916,10 +918,11 @@ function using_heider_attr_destab(
         weak_balance_in_complete_graph = zeros(zmax)
         local_polarization = zeros(zmax)
         global_polarization = zeros(zmax)
+        initial_neg_links_count = zeros(zmax)
         if isempty(all_links_mat)
-            initial_neg_links_count = ones(zmax) * larger_size * (n - larger_size)
+            initial_neg_links_count .= ones(zmax) * larger_size * (n - larger_size)
         else
-            initial_neg_links_count = ones(zmax) .* sum(rl_weights .< 0)
+            initial_neg_links_count .= ones(zmax) .* sum(rl_weights .< 0)
             if issymmetric(all_links_mat)
                 initial_neg_links_count ./= 2
             end
@@ -932,6 +935,12 @@ function using_heider_attr_destab(
         times = zeros(zmax)
 
         for rep = 1:zmax
+            if !isempty(all_links_mat) && isempty(specified_division) # if this is true,then in each rep new division should be generated. 
+                init_random_balanced_relations!(rl_weights, n, larger_size; art_attr = art_attr)
+                rl_weights .*= all_links_mat
+
+                initial_neg_links_count[zmax] = sum(rl_weights .< 0)
+            end
             val0_attr = get_attributes(attr, n)
             al_weights = get_attribute_layer_weights(attr, val0_attr)
 
