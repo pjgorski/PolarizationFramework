@@ -432,9 +432,10 @@ function initialize_file(
     ode_fun_name::String,
     files_folder::Vector{String},
     filename_prefix::String,
+    larger_size::Int = -1,
 )
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name)
+    r = Result(n, attr, gammas, maxtime, ode_fun_name, larger_size = larger_size)
 
     prefix = filename_prefix * Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
     file_params = savename(prefix, r, "mat", sort = false)
@@ -888,6 +889,7 @@ function using_heider_attr_destab(
         ode_fun_name,
         files_folder,
         filename_prefix,
+        larger_size,
     )
 
     # time prepariation
