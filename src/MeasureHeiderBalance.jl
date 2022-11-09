@@ -435,7 +435,7 @@ function initialize_file(
     larger_size::Int = -1,
 )
 
-    r = Result(n, attr, gammas, maxtime, ode_fun_name, larger_size = larger_size)
+    r = Result(n, attr, gammas, maxtime, ode_fun_name, larger_size)
 
     prefix = filename_prefix * Dates.format(now(), "yyyy-mm-ddTHH:MM:SS")
     file_params = savename(prefix, r, "mat", sort = false)
