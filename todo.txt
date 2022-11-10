@@ -1,3 +1,4 @@
 TODO:
 
--readme
+-correct error of larger_size in destab sim files. This error didnt affect simulations if they had odd number of nodes. 
+This needs correction of files and perhaps readme.

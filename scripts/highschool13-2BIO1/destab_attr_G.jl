@@ -41,7 +41,8 @@ gammas = [0.5, 1.5, 2, 2.5, 3, 3.5, 4, 6]
 # gammas = [0.5]
 # gammas = [6]
 
-larger_sizes = [@onlyif(i <= "ns" < 2 * i, i) for i = 1:maximum(ns)]
+larger_sizes = [@onlyif(i <= "ns" <= 2 * i, i) for i = 1:maximum(ns)]
+larger_sizes = ns ./ 2 #there was an error above, that didnt include ns/2 larger_size. Therefore this simulation is needed. Later this line should be commented out. 
 
 all_params = @strdict(ns, gs, threshold, vs, attr_types, larger_sizes)
 dicts = dict_list(all_params)
