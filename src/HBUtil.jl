@@ -426,7 +426,7 @@ export get_correlation
 # dist_to_1 - weights don't have to be exactly +-1, but are as close as this value
 # Returns the weights.
 function init_random_balanced_relations(n, larger_size::Int, dist_to_1 = 0.01)
-    xy_attr = zeros(n,n)
+    xy_attr = zeros(n, n)
     init_random_balanced_relations!(xy_attr, n, larger_size, dist_to_1)
 
     return xy_attr
@@ -444,7 +444,7 @@ function init_random_balanced_relations!(
     if isempty(art_attr)
         art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
     end
-    
+
     shuffle!(art_attr)
     xy_attr .= triu(art_attr * art_attr', 1)
 
