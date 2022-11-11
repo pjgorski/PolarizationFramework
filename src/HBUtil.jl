@@ -3,6 +3,7 @@
 
 using DifferentialEquations
 using LinearAlgebra
+using Random
 
 # using Attributes
 
@@ -425,12 +426,9 @@ export get_correlation
 # dist_to_1 - weights don't have to be exactly +-1, but are as close as this value
 # Returns the weights.
 function init_random_balanced_relations(n, larger_size::Int, dist_to_1 = 0.01)
-    # larger_size = Int(ceil(rand(n/2:n)))
+    xy_attr = zeros(n,n)
+    init_random_balanced_relations!(xy_attr, n, larger_size, dist_to_1)
 
-    art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
-    xy_attr = triu(art_attr * art_attr', 1)
-
-    xy_attr = xy_attr .* (1 - dist_to_1)
     return xy_attr
 end
 export init_random_balanced_relations
@@ -446,7 +444,8 @@ function init_random_balanced_relations!(
     if isempty(art_attr)
         art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
     end
-
+    
+    shuffle!(art_attr)
     xy_attr .= triu(art_attr * art_attr', 1)
 
     xy_attr .*= (1 - dist_to_1)
