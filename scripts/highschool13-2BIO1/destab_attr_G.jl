@@ -26,7 +26,7 @@ triads_count_mat = PolarizationFramework.link_triangles_mat_inv(ns[1], all_links
 reps = [100]
 reps_dict = Dict(zip(ns, reps))
 gs = [1:2:21...]
-# gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
