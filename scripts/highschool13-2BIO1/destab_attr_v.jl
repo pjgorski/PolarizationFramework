@@ -35,7 +35,7 @@ attr_types = ["UA", "OA", "UPA"]
 gammas = [0.5, 1.5, 6]
 
 larger_sizes = [@onlyif(i <= "ns" <= 2 * i, i) for i = 1:maximum(ns)]
-larger_sizes = ns ./ 2 #to comment out later
+# larger_sizes = ns ./ 2 #to comment out later
 
 all_params = @strdict(ns, gs, threshold, vs, attr_types, larger_sizes)
 dicts = dict_list(all_params)
