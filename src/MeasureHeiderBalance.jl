@@ -904,7 +904,9 @@ function using_heider_attr_destab(
     firstline = 1
     realization_counter = 0
 
-    art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
+    if !isempty(all_links_mat) && isempty(specified_division)
+        art_attr = [ones(larger_size, 1); -ones(n - larger_size, 1)]
+    end
     for i = 1:length(gammas)
         gamma1 = gammas[i]
 
