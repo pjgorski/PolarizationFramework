@@ -44,7 +44,7 @@ specified_division = [
 
 ns = [nv(gr)]
 # ns = [5, 9]#[9,15,25]
-reps = [100]
+reps = [900]
 reps_dict = Dict(zip(ns, reps))
 gs = [1, 3, 5, 7, 11]
 # gs = [5]

@@ -24,7 +24,7 @@ triads_around_links_dict = get_triangles_around_links(all_triads)
 link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
 link_pairs_triad_cnt = [length(link) for link in link_pairs];
 
-reps = [100]
+reps = [900]
 reps_dict = Dict(zip(ns, reps))
 # gs = [1, 3, 5, 7,11]
 gs = [5, 11]
