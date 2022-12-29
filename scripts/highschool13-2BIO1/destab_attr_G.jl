@@ -23,10 +23,10 @@ triads_around_links_dict = get_triangles_around_links(all_triads)
 counts = link_triangles_count(triads_around_links_dict; links = all_links)
 triads_count_mat = PolarizationFramework.link_triangles_mat_inv(ns[1], all_links, counts)
 
-reps = [100]
+reps = [900]
 reps_dict = Dict(zip(ns, reps))
 gs = [1:2:21...]
-# gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA

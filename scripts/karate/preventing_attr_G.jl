@@ -22,11 +22,11 @@ triads_around_links_dict = get_triangles_around_links(all_triads)
 link_pairs = get_triangles_around_links(triads_around_links_dict, all_links)
 link_pairs_triad_cnt = [length(link) for link in link_pairs];
 
-reps = [100]
+reps = [900]
 reps_dict = Dict(zip(ns, reps))
 # two parts of simulations
 gs = [1:2:21...]
-gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
+# gs = [25, 29, 33, 37, 41, 45, 49, 55, 61, 67, 73, 81, 89, 97]
 threshold = 0.5;
 vs = [4, @onlyif("attr_types" == "OA", 1000)] #includes CA
 
