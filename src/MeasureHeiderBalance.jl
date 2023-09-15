@@ -19,7 +19,7 @@ using Graphs
 # maxtime - maximal time of calculating differential equations
 # ode_fun - function calculating derivatives
 # solver - function solving different equations
-# show_plot - parameter whether the solution will be plotted. If not transition values are not saved. 
+# keep_time_series - parameter whether the solution will be plotted. If not transition values are not saved. 
 # input is optional extra parameters with initial conditions of RL and AL (u0, xy_attr). 
 # If input is empty, random initial conditions are generated. 
 # If not, the first value (possibly empty) should contain initial conditions for RL. 
@@ -34,7 +34,7 @@ using Graphs
 # values of RL weights at the end of simulation, 
 # initial conditions of RL, 
 # initial conditions of AL, 
-# whole sol (if transition values are not saved, see show_plot, then they are not here).
+# whole sol (if transition values are not saved, see keep_time_series, then they are not here).
 function calc_heider_attr(
     n::Int,
     attr::AbstractAttributes,
@@ -42,7 +42,7 @@ function calc_heider_attr(
     maxtime::Float64,
     ode_fun::Function,
     solver,
-    show_plot::Bool,
+    keep_time_series::Bool,
     input...;
     all_links_mat = [], #if existing, this should be of size (n,n) and this would show which relations may change and which cannot because they do not exist
     all_triads = [], # list of all triads
@@ -52,6 +52,7 @@ function calc_heider_attr(
     link_indices = [], # indices from adjacency matrix of links belonging to triads, i.e., links that are interesting in terms dynamics
     link_pairs = [], # vector (Vector{Vector{Tuple{Int64, Int64}}}) corresponding to link_indices. Each element is the vector with tuples of two link indices that close the triad with the given link
     link_pairs_triad_cnt = [], # vector corresponding to link_indices. Contains number of triads for each link. 
+    to_plot::Bool = false, # if true time series of relations are plotted. This requires `keep_time_series` to be `true`.
 )
 
     if !isempty(all_links_mat)
@@ -145,7 +146,7 @@ function calc_heider_attr(
         abstol = 1e-12,
         callback = cb,
         isoutofdomain = (u, p, t) -> any(x -> abs.(x) >= 1, u),
-        save_everystep = show_plot,
+        save_everystep = keep_time_series,
     )
 
     #estimating output
@@ -233,7 +234,7 @@ function calc_heider_attr(
         global_polarization,
     ]
 
-    if show_plot
+    if to_plot
 
         if end_signs isa Vector
             h = plot(
