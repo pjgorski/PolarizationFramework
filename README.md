@@ -26,6 +26,8 @@ This framework is authored by Piotr J Górski.
 This code base is using the Julia Language (1.6.4) and [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project. 
 
+Update [11.09.2014]: When updating all the packages and changing the Julia version to 1.10.4 in the `Project.toml`, all tests were passed. This is however, not included in the current version of this package. 
+
 # Getting started
 
 ## Installation
